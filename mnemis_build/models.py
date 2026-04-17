@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 def make_uuid(prefix: str) -> str:
@@ -67,6 +67,13 @@ class CategoryAssignment(BaseModel):
 
 class CategoryAssignmentPayload(BaseModel):
     assignments: list[CategoryAssignment]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_top_level_shape(cls, value: object) -> object:
+        if isinstance(value, list):
+            return {"assignments": value}
+        return value
 
 
 class CategoryDetail(BaseModel):

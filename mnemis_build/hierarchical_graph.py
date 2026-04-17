@@ -97,6 +97,7 @@ class HierarchicalGraphBuilder:
                     "content": build_hierarchy_user_prompt(layer, content, existing, PREV_EXAMPLE),
                 },
             ],
+            require_json_object=False,
         )
 
     def _is_speaker_node(self, node: IndexedNode) -> bool:

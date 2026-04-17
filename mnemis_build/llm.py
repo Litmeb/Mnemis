@@ -34,15 +34,32 @@ class OpenAILLMClient:
         use_small_model: bool = False,
         model_name: str | None = None,
         temperature: float = 0.0,
+        require_json_object: bool = True,
     ) -> T:
-        response = await self.client.chat.completions.create(
-            model=model_name or (self.config.small_llm_model if use_small_model else self.config.llm_model),
-            temperature=temperature,
-            response_format={"type": "json_object"},
-            messages=list(messages),
-        )
+        request: dict[str, Any] = {
+            "model": model_name or (self.config.small_llm_model if use_small_model else self.config.llm_model),
+            "temperature": temperature,
+            "messages": list(messages),
+        }
+        if require_json_object:
+            request["response_format"] = {"type": "json_object"}
+        response = await self.client.chat.completions.create(**request)
         content = response.choices[0].message.content or "{}"
-        return model.model_validate(json.loads(content))
+        return model.model_validate(self._parse_json_content(content))
+
+    def _parse_json_content(self, content: str) -> Any:
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            decoder = json.JSONDecoder()
+            starts = [pos for pos in (content.find("{"), content.find("[")) if pos != -1]
+            for start in sorted(starts):
+                try:
+                    parsed, _ = decoder.raw_decode(content[start:])
+                    return parsed
+                except json.JSONDecodeError:
+                    continue
+        raise ValueError(f"Could not parse JSON content: {content!r}")
 
     async def complete_text(
         self,

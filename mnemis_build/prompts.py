@@ -77,53 +77,34 @@ Return JSON only using the same schema as the original edge extraction.
 """
 
 HIERARCHICAL_SYSTEM_PROMPT = """You are an AI assistant specialized in semantic categorization of nodes.
-# INSTRUCTIONS:
 
-You are given a list of node names, each prefixed with an index, each followed with a brief description of the name (for example: 1. dog: [domestic animal]).
-Your task is to:
+You are given indexed nodes with names and short descriptions.
+Your task is to assign every node to one or more semantically meaningful categories.
 
-1. Group the nodes into semantically meaningful categories based on shared attributes, considering both inherent characteristics of the node names and the DESCRIPTIONS of the nodes, NOT relying solely on the DESCRIPTIONS.
-All EXISTING CATEGORIES are provided for you.
+Instructions:
+1. Group nodes by shared semantic attributes, using both the node names and their descriptions.
+2. Reuse EXISTING CATEGORIES whenever they already fit a node well.
+3. If no existing category fits, create a new category.
+4. Category names must be short, semantically clear, and must NOT contain the word "and".
+5. A node may belong to multiple categories when justified.
+6. There must be no leftover nodes. Single-member categories are allowed when necessary.
+7. The node name "user" and any first-person references ("I", "me") must be categorized into exactly one category called "Speaker".
 
-- If a node's attribute matches an existing category, it should be added under that category.
-- If a node name has attributes that do not match any existing category, create a new category and add it.
-- The category name MUST NOT include the word "and" as a connector.
+Return JSON only.
 
-Examples of INVALID categories:
-- "Food and Drinks"
-- "University and Courses"
+Preferred output format:
+[
+  {"category": "xx", "indexes": [0, 1, 2, 4]},
+  {"category": "xxx", "indexes": [2, 3, 4]}
+]
 
-Examples of VALID categories:
-- "Food"
-- "Drinks"
-- "University"
-- "Courses"
-
-2. Output each category as a dictionary entry where the key is the category name and the value is a list of node indexes. Only refer to nodes by their indexes. Do not repeat node names.
-
-Output format:
+If your serving stack requires a top-level JSON object, this wrapper is also acceptable:
 {
   "assignments": [
     {"category": "xx", "indexes": [0, 1, 2, 4]},
     {"category": "xxx", "indexes": [2, 3, 4]}
   ]
 }
-
-The tag is a list of descriptors where each descriptor is at most 3 words, and there are at most 5 descriptors.
-
-Tag example:
-- Entity name: "Son"
-- Tag: ["Family member", "Happy kid", "Anime lover"]
-
-3. A node CAN be assigned to MULTIPLE categories at the same time.
-
-Key points for multi-category classification:
-- Each item can be assigned to multiple categories based on shared attributes.
-- When multiple categories are formed for an item, select the minimal subset of features that are common across the grouped items.
-
-4. There must be NO leftover or ungrouped nodes. Single-member categories are allowed if necessary.
-
-5. The node name "user" and any first-person references ("I", "me") MUST be categorized into one category called "Speaker".
 """
 
 
@@ -168,6 +149,7 @@ Layer 4:
 Key points:
 - Categories may belong to multiple parent categories.
 - Do not merge categories that are too loosely related.
+- Prefer the minimal shared semantic feature that cleanly explains a grouping.
 
 Your job at Layer {layer}:
 - Merge semantically similar categories from Layer {layer - 1}.
@@ -184,6 +166,7 @@ Previous Layer {layer - 1} categories example:
 
 Please follow the INSTRUCTIONS and GUIDANCE carefully to ensure accurate categorization and meaningful hierarchical relationships.
 DO NOT INCLUDE ANY INVALID CATEGORIES.
+Return JSON only. Prefer the top-level list format unless your API requires an object wrapper.
 """
 
 
