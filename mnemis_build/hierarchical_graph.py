@@ -44,8 +44,20 @@ class HierarchicalGraphBuilder:
         for layer in range(1, self.config.max_hierarchy_layers + 1):
             if not current_nodes:
                 break
-            assignments = await self._extract_categories(layer, current_nodes, existing_categories)
-            categories = await self._materialize_categories(group_id, layer, current_nodes, assignments)
+            assignable_nodes, speaker_nodes = self._partition_nodes_for_assignment(layer, current_nodes)
+            assignments = await self._extract_categories(
+                layer,
+                assignable_nodes,
+                existing_categories,
+                self._build_speaker_policy_note(layer, speaker_nodes),
+            )
+            categories = await self._materialize_categories(
+                group_id,
+                layer,
+                assignable_nodes,
+                speaker_nodes,
+                assignments,
+            )
             if not categories:
                 break
             if not self._passes_compression(layer, current_nodes, categories):
@@ -76,7 +88,10 @@ class HierarchicalGraphBuilder:
         layer: int,
         nodes: list[IndexedNode],
         existing_categories: dict[str, str],
+        speaker_policy_note: str | None = None,
     ) -> CategoryAssignmentPayload:
+        if not nodes:
+            return CategoryAssignmentPayload(assignments=[])
         content = "\n".join(
             f"{node.index}. {node.name}: [{node.summary}] tags={node.tag}"
             for node in nodes[: self.config.max_categories_per_call] if self.config.max_categories_per_call > 0
@@ -94,26 +109,73 @@ class HierarchicalGraphBuilder:
                 {"role": "system", "content": HIERARCHICAL_SYSTEM_PROMPT},
                 {
                     "role": "user",
-                    "content": build_hierarchy_user_prompt(layer, content, existing, PREV_EXAMPLE),
+                    "content": build_hierarchy_user_prompt(
+                        layer,
+                        content,
+                        existing,
+                        PREV_EXAMPLE,
+                        speaker_policy_note=speaker_policy_note,
+                    ),
                 },
             ],
             require_json_object=False,
         )
 
-    def _is_speaker_node(self, node: IndexedNode) -> bool:
+    def _is_appendix_prompt_speaker_node(self, node: IndexedNode) -> bool:
         return node.name.strip().lower() in {"user", "i", "me"}
+
+    def _is_reserved_speaker_node(self, layer: int, node: IndexedNode) -> bool:
+        if layer != 1:
+            return False
+        mode = self.config.speaker_hierarchy_mode
+        if mode == "disabled":
+            return False
+        if mode == "paper_v2":
+            return node.is_speaker
+        return self._is_appendix_prompt_speaker_node(node)
+
+    def _partition_nodes_for_assignment(
+        self,
+        layer: int,
+        nodes: list[IndexedNode],
+    ) -> tuple[list[IndexedNode], list[IndexedNode]]:
+        # Speaker handling is resolved here so the LLM only clusters the remaining nodes.
+        speaker_nodes: list[IndexedNode] = []
+        assignable_nodes: list[IndexedNode] = []
+        for node in nodes:
+            if self._is_reserved_speaker_node(layer, node):
+                speaker_nodes.append(node)
+            else:
+                assignable_nodes.append(node)
+        return assignable_nodes, speaker_nodes
+
+    def _build_speaker_policy_note(self, layer: int, speaker_nodes: list[IndexedNode]) -> str | None:
+        if not speaker_nodes:
+            return None
+        if self.config.speaker_hierarchy_mode == "paper_v2":
+            return (
+                'Speaker handling follows paper v2 main-text semantics for Layer 1: speaker entities are reserved '
+                'outside this categorization step and will be grouped into one dedicated category named "Speaker".'
+            )
+        if self.config.speaker_hierarchy_mode == "appendix_prompt":
+            return (
+                'Speaker handling follows the appendix prompt semantics for Layer 1: only nodes literally named '
+                '"user", "I", or "me" are reserved outside this categorization step and will be grouped into one '
+                'dedicated category named "Speaker".'
+            )
+        return None
 
     async def _materialize_categories(
         self,
         group_id: str,
         layer: int,
-        nodes: list[IndexedNode],
+        assignable_nodes: list[IndexedNode],
+        speaker_nodes: list[IndexedNode],
         assignments: CategoryAssignmentPayload,
     ) -> list[CategoryRecord]:
-        nodes_by_index = {node.index: node for node in nodes}
+        nodes_by_index = {node.index: node for node in assignable_nodes}
         grouped: dict[str, list[IndexedNode]] = defaultdict(list)
         covered: set[int] = set()
-        speaker_indexes = {node.index for node in nodes if self._is_speaker_node(node)}
         for assignment in assignments.assignments:
             name = assignment.category.strip()
             if not name or " and " in f" {name.lower()} ":
@@ -122,22 +184,16 @@ class HierarchicalGraphBuilder:
             for idx in assignment.indexes:
                 if idx in nodes_by_index and idx not in unique_indexes:
                     unique_indexes.append(idx)
-            if name.lower() != "speaker":
-                unique_indexes = [idx for idx in unique_indexes if idx not in speaker_indexes]
             if not unique_indexes:
                 continue
             for idx in unique_indexes:
                 covered.add(idx)
                 grouped[name].append(nodes_by_index[idx])
-        for idx in speaker_indexes:
-            covered.add(idx)
-            grouped["Speaker"].append(nodes_by_index[idx])
-        for node in nodes:
+        for node in assignable_nodes:
             if node.index not in covered:
-                if self._is_speaker_node(node):
-                    grouped["Speaker"].append(node)
-                else:
-                    grouped[node.name].append(node)
+                grouped[node.name].append(node)
+        if speaker_nodes:
+            grouped["Speaker"].extend(speaker_nodes)
 
         details = await self._generate_category_details(layer, grouped)
         categories: list[CategoryRecord] = []

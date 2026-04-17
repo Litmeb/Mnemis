@@ -102,6 +102,7 @@ class Neo4jGraphStore:
             CALL db.index.fulltext.queryNodes('entity_name_ft', $query) YIELD node, score
             WHERE node.group_id = $group_id
             RETURN node.uuid AS uuid, node.name AS name, node.summary AS summary, node.tag AS tag,
+                   coalesce(node.is_speaker, false) AS is_speaker,
                    node.episode_idx AS episode_idx, node.source_ids AS source_ids, score AS fulltext_score
             ORDER BY fulltext_score DESC
             LIMIT $limit
@@ -120,6 +121,7 @@ class Neo4jGraphStore:
                  sqrt(reduce(b = 0.0, x IN n.name_embedding | b + x * x)) AS n_norm
             WITH n, CASE WHEN q_norm = 0 OR n_norm = 0 THEN 0.0 ELSE dot / (q_norm * n_norm) END AS similarity_score
             RETURN n.uuid AS uuid, n.name AS name, n.summary AS summary, n.tag AS tag,
+                   coalesce(n.is_speaker, false) AS is_speaker,
                    n.episode_idx AS episode_idx, n.source_ids AS source_ids, similarity_score
             ORDER BY similarity_score DESC
             LIMIT $limit
@@ -147,6 +149,7 @@ class Neo4jGraphStore:
             CALL db.index.fulltext.queryNodes('entity_text_ft', $query) YIELD node, score
             WHERE node.group_id = $group_id
             RETURN node.uuid AS uuid, node.name AS name, node.summary AS summary, node.tag AS tag,
+                   coalesce(node.is_speaker, false) AS is_speaker,
                    node.episode_idx AS episode_idx, node.source_ids AS source_ids, score AS fulltext_score
             ORDER BY fulltext_score DESC
             LIMIT $limit
@@ -165,6 +168,7 @@ class Neo4jGraphStore:
                  sqrt(reduce(b = 0.0, x IN n.summary_embedding | b + x * x)) AS n_norm
             WITH n, CASE WHEN q_norm = 0 OR n_norm = 0 THEN 0.0 ELSE dot / (q_norm * n_norm) END AS similarity_score
             RETURN n.uuid AS uuid, n.name AS name, n.summary AS summary, n.tag AS tag,
+                   coalesce(n.is_speaker, false) AS is_speaker,
                    n.episode_idx AS episode_idx, n.source_ids AS source_ids, similarity_score
             ORDER BY similarity_score DESC
             LIMIT $limit
@@ -359,6 +363,7 @@ class Neo4jGraphStore:
                 n.name = $name,
                 n.summary = $summary,
                 n.tag = $tag,
+                n.is_speaker = $is_speaker,
                 n.episode_idx = $episode_idx,
                 n.source_ids = $source_ids,
                 n.name_embedding = $name_embedding,
@@ -369,6 +374,7 @@ class Neo4jGraphStore:
             name=entity.name,
             summary=entity.summary,
             tag=entity.tag,
+            is_speaker=entity.is_speaker,
             episode_idx=entity.episode_idx,
             source_ids=entity.source_ids,
             name_embedding=name_embedding,
@@ -392,7 +398,8 @@ class Neo4jGraphStore:
             """
             MATCH (n:Entity {group_id: $group_id})
             WHERE n.name IN $names
-            RETURN n.uuid AS uuid, n.name AS name, n.summary AS summary, n.tag AS tag
+            RETURN n.uuid AS uuid, n.name AS name, n.summary AS summary, n.tag AS tag,
+                   coalesce(n.is_speaker, false) AS is_speaker
             """,
             group_id=group_id,
             names=names,
@@ -434,7 +441,8 @@ class Neo4jGraphStore:
         result = await self.execute(
             """
             MATCH (n:Entity {group_id: $group_id})
-            RETURN n.uuid AS uuid, n.name AS name, n.summary AS summary, n.tag AS tag
+            RETURN n.uuid AS uuid, n.name AS name, n.summary AS summary, n.tag AS tag,
+                   coalesce(n.is_speaker, false) AS is_speaker
             ORDER BY n.name
             """,
             group_id=group_id,

@@ -5,7 +5,6 @@ Extract all concrete entities mentioned in the current episode and the recent ep
 Rules:
 - Include people, organizations, places, objects, events, and well-defined concepts.
 - Prefer names and specific noun phrases over vague references.
-- Include the speaker as an entity even if no explicit proper noun is present.
 - Do not output duplicates.
 - Return JSON only with this schema:
 {"names": ["entity 1", "entity 2"]}
@@ -88,7 +87,6 @@ Instructions:
 4. Category names must be short, semantically clear, and must NOT contain the word "and".
 5. A node may belong to multiple categories when justified.
 6. There must be no leftover nodes. Single-member categories are allowed when necessary.
-7. The node name "user" and any first-person references ("I", "me") must be categorized into exactly one category called "Speaker".
 
 Return JSON only.
 
@@ -108,7 +106,21 @@ If your serving stack requires a top-level JSON object, this wrapper is also acc
 """
 
 
-def build_hierarchy_user_prompt(layer: int, content: str, existing_categories: str, prev_example: str) -> str:
+def build_hierarchy_user_prompt(
+    layer: int,
+    content: str,
+    existing_categories: str,
+    prev_example: str,
+    speaker_policy_note: str | None = None,
+) -> str:
+    speaker_policy = ""
+    if speaker_policy_note:
+        speaker_policy = f"""
+<SPEAKER POLICY>
+{speaker_policy_note}
+</SPEAKER POLICY>
+
+"""
     return f"""<NODE INDEXED NAMES AND DESCRIPTIONS>
 {content}
 </NODE INDEXED NAMES AND DESCRIPTIONS>
@@ -160,8 +172,8 @@ Previous Layer {layer - 1} categories example:
 {prev_example}
 </GUIDANCE ON CATEGORY GRANULARITY>
 
-# ATTENTION
-- The node name "user" and any first-person references ("I", "me") MUST be categorized into one category called "Speaker".
+{speaker_policy}# ATTENTION
+- Every node listed above must appear in at least one category assignment.
 - The category name MUST NOT include the word "and".
 
 Please follow the INSTRUCTIONS and GUIDANCE carefully to ensure accurate categorization and meaningful hierarchical relationships.

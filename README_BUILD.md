@@ -12,15 +12,14 @@ This repository originally exposed only the global selector. The new `mnemis_bui
 - Base graph uses incremental episode ingestion
 - Entity extraction follows: extract -> reflection -> de-dup -> summarize/tag
 - Edge extraction follows: extract -> reflection -> de-dup
-- Speaker is forcibly extracted as an entity
+- Base graph can forcibly extract the current episode speaker as an entity
 - Hierarchical graph is built bottom-up from layer 0 entities
 - Category summaries and tags are generated from child members
-- Hierarchical prompt follows the appendix constraints:
+- Hierarchical prompt follows the appendix constraints for the nodes that are still delegated to the LLM:
   - minimal abstraction
   - many-to-many mapping
   - no category names with `and`
   - no leftover nodes
-  - `Speaker` rule for `user` / first-person references
 - Hierarchy stops when compression constraints fail or max layer is reached
 - Retrieval includes:
   - System-1 search with full-text + embedding fusion
@@ -38,6 +37,22 @@ The paper does not publish the full base-graph prompts. Those parts are reconstr
 - `Category`
 - `Category_{layer}`
 - `CATEGORIZES`
+
+## Speaker Policy
+
+`mnemis_build` now uses one explicit `Speaker` handling path instead of letting both prompts and code enforce the rule independently.
+
+- Base graph:
+  - `MNEMIS_FORCE_BASE_SPEAKER_ENTITY=true` by default.
+  - This matches paper v2 main text, which says base-graph ingestion "forcibly rule-extract[s] the speaker as an entity".
+  - The LLM prompt no longer secretly re-enforces that rule; the builder injects the speaker entity directly and stores an internal `is_speaker` marker.
+- Hierarchical graph:
+  - `MNEMIS_SPEAKER_HIERARCHY_MODE=paper_v2` by default.
+  - In `paper_v2` mode, layer-1 speaker handling follows paper v2 main text: entities marked as speaker by the base graph are removed from the LLM categorization input and deterministically grouped into a dedicated `Speaker` category.
+  - In `appendix_prompt` mode, layer-1 speaker handling follows the appendix prompt semantics instead: only literal `user` / `I` / `me` nodes are reserved into `Speaker`.
+  - In `disabled` mode, no dedicated `Speaker` category is reserved by the builder.
+
+This split is intentional because paper v2 main text and the appendix prompt describe slightly different `Speaker` semantics. The default behavior is the paper v2 main-text behavior, not the appendix-only wording.
 
 ## Environment
 
@@ -57,6 +72,8 @@ $env:EMBEDDING_DIM="128"
 Optional knobs:
 
 ```powershell
+$env:MNEMIS_FORCE_BASE_SPEAKER_ENTITY="true"
+$env:MNEMIS_SPEAKER_HIERARCHY_MODE="paper_v2"
 $env:MNEMIS_MIN_CHILDREN_PER_CATEGORY="2"
 $env:MNEMIS_MAX_HIERARCHY_LAYERS="4"
 $env:MNEMIS_RECENT_EPISODE_WINDOW="6"

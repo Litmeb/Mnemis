@@ -26,6 +26,22 @@ def _normalize_rerank_mode(value: str | None) -> str:
     return "auto"
 
 
+def _normalize_speaker_hierarchy_mode(value: str | None) -> str:
+    normalized = (value or "paper_v2").strip().lower().replace("-", "_")
+    aliases = {
+        "paper": "paper_v2",
+        "paperv2": "paper_v2",
+        "appendix": "appendix_prompt",
+        "appendix_v2": "appendix_prompt",
+        "off": "disabled",
+        "none": "disabled",
+    }
+    normalized = aliases.get(normalized, normalized)
+    if normalized in {"paper_v2", "appendix_prompt", "disabled"}:
+        return normalized
+    return "paper_v2"
+
+
 @dataclass(slots=True)
 class BuildConfig:
     neo4j_url: str
@@ -45,6 +61,8 @@ class BuildConfig:
     embedding_dim: int
     recent_episode_window: int
     max_reflection_rounds: int
+    force_base_speaker_entity: bool
+    speaker_hierarchy_mode: str
     min_children_per_category: int
     max_hierarchy_layers: int
     max_categories_per_call: int
@@ -87,6 +105,10 @@ class BuildConfig:
             embedding_dim=int(_pick_env("EMBEDDING_DIM", default="128") or "128"),
             recent_episode_window=int(_pick_env("MNEMIS_RECENT_EPISODE_WINDOW", default="6") or "6"),
             max_reflection_rounds=int(_pick_env("MNEMIS_MAX_REFLECTION_ROUNDS", default="1") or "1"),
+            force_base_speaker_entity=_pick_bool_env("MNEMIS_FORCE_BASE_SPEAKER_ENTITY", default=True),
+            speaker_hierarchy_mode=_normalize_speaker_hierarchy_mode(
+                _pick_env("MNEMIS_SPEAKER_HIERARCHY_MODE", default="paper_v2")
+            ),
             min_children_per_category=int(_pick_env("MNEMIS_MIN_CHILDREN_PER_CATEGORY", default="2") or "2"),
             max_hierarchy_layers=int(_pick_env("MNEMIS_MAX_HIERARCHY_LAYERS", default="4") or "4"),
             max_categories_per_call=int(_pick_env("MNEMIS_MAX_CATEGORIES_PER_CALL", default="0") or "0"),

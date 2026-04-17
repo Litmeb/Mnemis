@@ -58,6 +58,11 @@ class BaseGraphBuilder:
     def _normalize_text(self, value: str) -> str:
         return " ".join(value.lower().split())
 
+    def _forced_speaker_name(self, episode: EpisodeInput) -> str | None:
+        if not self.config.force_base_speaker_entity:
+            return None
+        return episode.speaker.strip() or "user"
+
     def _choose_entity_match(self, name: str, candidates: list[dict]) -> dict | None:
         normalized = self._normalize_text(name)
         for candidate in candidates:
@@ -106,7 +111,10 @@ class BaseGraphBuilder:
             use_small_model=True,
         )
         names = OrderedDict((name.strip(), None) for name in extraction.names if name.strip())
-        names.setdefault(episode.speaker.strip() or "user", None)
+        forced_speaker_name = self._forced_speaker_name(episode)
+        if forced_speaker_name:
+            # Paper v2 states that base-graph ingestion forcibly extracts the speaker as an entity.
+            names.setdefault(forced_speaker_name, None)
         for _ in range(self.config.max_reflection_rounds):
             reflection = await self.llm.complete_json(
                 EntityNameExtraction,
@@ -136,6 +144,7 @@ class BaseGraphBuilder:
                     tag=candidate.get("tag") or [],
                     episode_idx=candidate.get("episode_idx") or [],
                     source_ids=candidate.get("source_ids") or [],
+                    is_speaker=bool(candidate.get("is_speaker")),
                 )
                 if episode_uuid not in existing.episode_idx:
                     existing.episode_idx.append(episode_uuid)
@@ -150,6 +159,7 @@ class BaseGraphBuilder:
                     tag=[],
                     episode_idx=[episode_uuid],
                     source_ids=[episode.source_id],
+                    is_speaker=False,
                 )
 
         detail_payload = {
@@ -172,10 +182,25 @@ class BaseGraphBuilder:
                 {"role": "user", "content": json.dumps(detail_payload, ensure_ascii=False)},
             ],
         )
+        existing_by_normalized_name = {
+            self._normalize_text(name): entity
+            for name, entity in existing_by_name.items()
+        }
+        forced_speaker_names = {
+            self._normalize_text(name)
+            for name in [forced_speaker_name]
+            if name
+        }
 
         name_embeddings = await self.llm.embed([entity.name for entity in details.entities])
         summary_embeddings = await self.llm.embed([entity.summary for entity in details.entities])
         for entity, name_embedding, summary_embedding in zip(details.entities, name_embeddings, summary_embeddings):
+            normalized_name = self._normalize_text(entity.name)
+            seed = existing_by_normalized_name.get(normalized_name)
+            if seed is not None:
+                entity.is_speaker = seed.is_speaker
+            if normalized_name in forced_speaker_names:
+                entity.is_speaker = True
             if not entity.uuid:
                 entity.uuid = make_uuid("entity")
             entity.group_id = group_id

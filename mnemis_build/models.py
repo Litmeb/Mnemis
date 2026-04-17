@@ -31,6 +31,7 @@ class EntityRecord(BaseModel):
     tag: list[str] = Field(default_factory=list)
     episode_idx: list[str] = Field(default_factory=list)
     source_ids: list[str] = Field(default_factory=list)
+    is_speaker: bool = False
 
 
 class EdgeRecord(BaseModel):
@@ -58,6 +59,7 @@ class IndexedNode(BaseModel):
     summary: str
     tag: list[str] = Field(default_factory=list)
     layer: int = 0
+    is_speaker: bool = False
 
 
 class CategoryAssignment(BaseModel):
