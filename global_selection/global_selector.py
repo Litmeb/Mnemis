@@ -13,7 +13,8 @@ from async_lru import alru_cache
 from openai import AsyncAzureOpenAI, AsyncOpenAI, AzureOpenAI
 from pydantic import BaseModel
 
-from graphiti_core.llm_client import LLMClient, ModelSize, OpenAIClient
+from graphiti_core.llm_client import LLMClient, LLMConfig, OpenAIClient
+from graphiti_core.llm_client.config import ModelSize
 from graphiti_core.prompts.models import Message
 from .prompts import NODE_SELECTION_PROMPT_TEMPLATE
 
@@ -241,7 +242,7 @@ class GlobalSelector:
         response = await self.llm_client.generate_response(
             messages=[Message(role='user', content=prompt)],
             response_model=NodeSelectionList,
-            model_size=ModelSize.large
+            model_size=ModelSize.medium
         )
 
         selected_categories = []
@@ -385,14 +386,17 @@ async def get_global_search_context(query_groupid_list, global_searcher: GlobalS
     return search_results
 
 async def parse_locomo(selector: GlobalSelector):
-    group_id_prefix = 'locomo_mnemis_coreAI_tel_b20_nec_full'
-    max_concurrent = 10
-    batch_size = 50
-    output_path = '/data/zh/gs/v2_locomo_mnemis_coreAI_tel_b20_nec_full.json'
+    group_id_prefix = os.getenv('MNEMIS_LOCOMO_GROUP_PREFIX', 'locomo_mnemis_coreAI_tel_b20_nec_full')
+    max_concurrent = int(os.getenv('MNEMIS_LOCOMO_MAX_CONCURRENT', '10'))
+    batch_size = int(os.getenv('MNEMIS_LOCOMO_BATCH_SIZE', '50'))
+    data_path = os.getenv('MNEMIS_LOCOMO_DATA', 'data/locomo.json')
+    output_path = os.getenv('MNEMIS_LOCOMO_OUTPUT', 'results/v2_locomo_mnemis_coreAI_tel_b20_nec_full.json')
 
-    query_groupid_list = load_locomo_data_query_group_id('data/locomo.json', group_id_prefix=group_id_prefix)
+    query_groupid_list = load_locomo_data_query_group_id(data_path, group_id_prefix=group_id_prefix)
     all_data_count = len(query_groupid_list)
-    
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as output_file:
         for i in tqdm(range(0, all_data_count, batch_size), desc=f"Processing Batches (locomo, b={batch_size})"):
             batch = query_groupid_list[i:i + batch_size]
@@ -407,14 +411,17 @@ async def parse_locomo(selector: GlobalSelector):
             print(f"Batch {i // batch_size + 1} results saved to {output_path}")
 
 async def parse_lme(selector: GlobalSelector):
-    group_id_prefix = 'lme_s_mnemis_coreAI_tel_b20_nec_full'
-    max_concurrent = 10
-    batch_size = 30
-    output_path = '/data/zh/gs/v2_lme_s_mnemis_coreAI_tel_b20_nec_full.json'
+    group_id_prefix = os.getenv('MNEMIS_LME_GROUP_PREFIX', 'lme_s_mnemis_coreAI_tel_b20_nec_full')
+    max_concurrent = int(os.getenv('MNEMIS_LME_MAX_CONCURRENT', '10'))
+    batch_size = int(os.getenv('MNEMIS_LME_BATCH_SIZE', '30'))
+    data_path = os.getenv('MNEMIS_LME_DATA', 'data/longmemeval_s.json')
+    output_path = os.getenv('MNEMIS_LME_OUTPUT', 'results/v2_lme_s_mnemis_coreAI_tel_b20_nec_full.json')
 
-    query_groupid_list = load_lme_data_query_group_id('data/longmemeval_s.json', group_id_prefix=group_id_prefix)
+    query_groupid_list = load_lme_data_query_group_id(data_path, group_id_prefix=group_id_prefix)
     all_data_count = len(query_groupid_list)
-    
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as output_file:
         for i in tqdm(range(0, all_data_count, batch_size), desc=f"Processing Batches (lme_s, b={batch_size})"):
             batch = query_groupid_list[i:i + batch_size]
@@ -429,15 +436,28 @@ async def parse_lme(selector: GlobalSelector):
             print(f"Batch {i // batch_size + 1} results saved to {output_path}")
 
 async def main():
-    url = 'bolt://localhost:7687'
-    user = 'xxx'
-    password = 'xxx'
+    url = os.getenv('MNEMIS_NEO4J_URL', 'bolt://localhost:7687')
+    user = os.getenv('MNEMIS_NEO4J_USER')
+    password = os.getenv('MNEMIS_NEO4J_PASSWORD')
+    if not user or not password:
+        raise RuntimeError("Missing Neo4j credentials. Set MNEMIS_NEO4J_USER and MNEMIS_NEO4J_PASSWORD.")
     driver = AsyncGraphDatabase.driver(url, auth=(user, password), max_connection_pool_size=1000)
-    raw_client = AsyncOpenAI(
-        base_url="xxx",
-        api_key="EMPTY"
+
+    base_url = os.getenv('MNEMIS_OPENAI_BASE_URL')
+    api_key = os.getenv('MNEMIS_OPENAI_API_KEY')
+    if not api_key:
+        raise RuntimeError("Missing OpenAI API key. Set MNEMIS_OPENAI_API_KEY (and optionally MNEMIS_OPENAI_BASE_URL).")
+    if base_url:
+        raw_client = AsyncOpenAI(base_url=base_url, api_key=api_key)
+    else:
+        raw_client = AsyncOpenAI(api_key=api_key)
+    llm_config = LLMConfig(
+        api_key=api_key,
+        base_url=base_url,
+        model=os.getenv('MNEMIS_OPENAI_MODEL'),
+        small_model=os.getenv('MNEMIS_OPENAI_SMALL_MODEL'),
     )
-    llm_client = OpenAIClient(client=raw_client)
+    llm_client = OpenAIClient(client=raw_client, config=llm_config)
     selector = GlobalSelector(driver, llm_client)
     
     start = time()
