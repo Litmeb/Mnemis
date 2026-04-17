@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
+from dataclasses import dataclass
 
 from .config import BuildConfig
 from .llm import OpenAILLMClient
@@ -24,6 +25,13 @@ Layer 2:
 - Microsoft Research Labs -> Tech Company Labs
 - Microsoft Research Labs -> AI Research Organizations
 """
+
+
+@dataclass(slots=True)
+class MaterializedLayer:
+    categories: list[CategoryRecord]
+    natural_child_uuids: set[str]
+    promoted_child_uuids: set[str]
 
 
 class HierarchicalGraphBuilder:
@@ -51,16 +59,17 @@ class HierarchicalGraphBuilder:
                 existing_categories,
                 self._build_speaker_policy_note(layer, speaker_nodes),
             )
-            categories = await self._materialize_categories(
+            materialized = await self._materialize_categories(
                 group_id,
                 layer,
                 assignable_nodes,
                 speaker_nodes,
                 assignments,
             )
+            categories = materialized.categories
             if not categories:
                 break
-            if not self._passes_compression(layer, current_nodes, categories):
+            if not self._passes_compression(layer, current_nodes, materialized):
                 break
 
             summary_embeddings = await self.llm.embed([category.summary for category in categories])
@@ -172,10 +181,12 @@ class HierarchicalGraphBuilder:
         assignable_nodes: list[IndexedNode],
         speaker_nodes: list[IndexedNode],
         assignments: CategoryAssignmentPayload,
-    ) -> list[CategoryRecord]:
+    ) -> MaterializedLayer:
         nodes_by_index = {node.index: node for node in assignable_nodes}
         grouped: dict[str, list[IndexedNode]] = defaultdict(list)
-        covered: set[int] = set()
+        natural_child_uuids: set[str] = set()
+        promoted_child_uuids: set[str] = set()
+        min_children = self.config.min_children_per_category
         for assignment in assignments.assignments:
             name = assignment.category.strip()
             if not name or " and " in f" {name.lower()} ":
@@ -186,12 +197,16 @@ class HierarchicalGraphBuilder:
                     unique_indexes.append(idx)
             if not unique_indexes:
                 continue
+            if len(unique_indexes) < min_children:
+                continue
             for idx in unique_indexes:
-                covered.add(idx)
-                grouped[name].append(nodes_by_index[idx])
+                node = nodes_by_index[idx]
+                natural_child_uuids.add(node.uuid)
+                grouped[name].append(node)
         for node in assignable_nodes:
-            if node.index not in covered:
-                grouped[node.name].append(node)
+            if node.uuid not in natural_child_uuids:
+                grouped[self._build_promoted_category_name(node, grouped)].append(node)
+                promoted_child_uuids.add(node.uuid)
         if speaker_nodes:
             grouped["Speaker"].extend(speaker_nodes)
 
@@ -211,7 +226,11 @@ class HierarchicalGraphBuilder:
                     child_uuids=[member.uuid for member in deduped_members],
                 )
             )
-        return categories
+        return MaterializedLayer(
+            categories=categories,
+            natural_child_uuids=natural_child_uuids,
+            promoted_child_uuids=promoted_child_uuids,
+        )
 
     async def _generate_category_details(
         self,
@@ -251,16 +270,41 @@ class HierarchicalGraphBuilder:
         self,
         layer: int,
         current_nodes: list[IndexedNode],
-        categories: list[CategoryRecord],
+        materialized: MaterializedLayer,
     ) -> bool:
         min_children = self.config.min_children_per_category
-        if any(len(category.child_uuids) < min_children and category.name != "Speaker" for category in categories):
-            oversized_next_layer = len(categories) > len(current_nodes) if layer >= 2 else False
-            if oversized_next_layer:
+        categories = materialized.categories
+        promoted_child_uuids = materialized.promoted_child_uuids
+
+        for category in categories:
+            if category.name == "Speaker":
+                continue
+            child_count = len(category.child_uuids)
+            if child_count >= min_children:
+                continue
+            if child_count != 1:
+                return False
+            promoted_uuid = category.child_uuids[0]
+            if promoted_uuid not in promoted_child_uuids:
                 return False
         if layer >= 2 and len(categories) > len(current_nodes):
             return False
         return True
+
+    def _build_promoted_category_name(
+        self,
+        node: IndexedNode,
+        grouped: dict[str, list[IndexedNode]],
+    ) -> str:
+        base_name = node.name.strip() or node.uuid
+        if base_name not in grouped:
+            return base_name
+        candidate = f"{base_name} (Promoted)"
+        suffix = 2
+        while candidate in grouped:
+            candidate = f"{base_name} (Promoted {suffix})"
+            suffix += 1
+        return candidate
 
     def _summarize_category(self, name: str, members: list[IndexedNode]) -> str:
         member_names = ", ".join(member.name for member in members[:6])

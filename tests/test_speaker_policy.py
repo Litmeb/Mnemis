@@ -103,13 +103,14 @@ def test_materialize_categories_injects_one_reserved_speaker_category() -> None:
         [{"category": "Food", "indexes": [1]}]
     )
 
-    categories = asyncio.run(
+    materialized = asyncio.run(
         builder._materialize_categories("group-1", 1, assignable_nodes, speaker_nodes, assignments)
     )
+    categories = materialized.categories
 
     by_name = {category.name: category for category in categories}
-    assert set(by_name) == {"Food", "Speaker"}
-    assert by_name["Food"].child_uuids == ["entity-1"]
+    assert set(by_name) == {"Peanuts", "Speaker"}
+    assert by_name["Peanuts"].child_uuids == ["entity-1"]
     assert by_name["Speaker"].child_uuids == ["speaker-1"]
 
 
