@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -10,6 +11,7 @@ from dotenv import load_dotenv
 from .base_graph import BaseGraphBuilder
 from .config import BuildConfig
 from .hierarchical_graph import HierarchicalGraphBuilder
+from .instrumentation import InstrumentationRecorder
 from .llm import OpenAILLMClient
 from .loaders import load_locomo_episodes
 from .neo4j_store import Neo4jGraphStore
@@ -19,13 +21,27 @@ from .retrieval import MnemisRetriever
 async def _run_rebuild_locomo(args: argparse.Namespace) -> None:
     config = BuildConfig.from_env()
     store = Neo4jGraphStore(config)
-    llm = OpenAILLMClient(config)
+    recorder = InstrumentationRecorder(run_name=f"rebuild_locomo_{args.group_id}")
+    llm = OpenAILLMClient(config, recorder=recorder)
     try:
         base_builder = BaseGraphBuilder(store, llm, config)
         hierarchy_builder = HierarchicalGraphBuilder(store, llm, config)
         episodes = load_locomo_episodes(args.data, user_index=args.user_index, group_id=args.group_id)
-        await base_builder.build(args.group_id, episodes)
-        await hierarchy_builder.rebuild(args.group_id)
+        with recorder.stage_timer(
+            "base_graph_ingestion",
+            "build",
+            metadata={"episode_count": len(episodes), "group_id": args.group_id},
+        ):
+            await base_builder.build(args.group_id, episodes)
+        with recorder.stage_timer(
+            "hierarchical_graph_ingestion",
+            "rebuild",
+            metadata={"group_id": args.group_id},
+        ):
+            await hierarchy_builder.rebuild(args.group_id)
+        report_dir = Path(os.getenv("MNEMIS_INSTRUMENTATION_DIR", "results/instrumentation"))
+        report_paths = recorder.write_reports(report_dir, stem=f"rebuild_locomo_{args.group_id}")
+        print(json.dumps({"instrumentation_reports": report_paths}, ensure_ascii=False, indent=2))
     finally:
         await store.close()
 

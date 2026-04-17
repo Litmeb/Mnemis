@@ -5,17 +5,38 @@ from tqdm import tqdm
 load_dotenv()
 import asyncio
 import json
-from time import time
+from pathlib import Path
+from time import perf_counter, time
 from typing import Literal
 from neo4j import AsyncDriver, AsyncGraphDatabase
 from async_lru import alru_cache
 
-from openai import AsyncAzureOpenAI, AsyncOpenAI, AzureOpenAI
+from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from graphiti_core.llm_client import LLMClient, LLMConfig, OpenAIClient
-from graphiti_core.llm_client.config import ModelSize
-from graphiti_core.prompts.models import Message
+try:
+    from graphiti_core.llm_client import LLMClient, LLMConfig, OpenAIClient
+except ImportError:
+    from graphiti_core.llm_client.client import LLMClient, OpenAIClient
+    from graphiti_core.llm_client.config import LLMConfig
+
+try:
+    from graphiti_core.llm_client.config import ModelSize
+except ImportError:
+    try:
+        from graphiti_core.llm_client import ModelSize
+    except ImportError:
+        from graphiti_core.models import ModelSize
+
+try:
+    from graphiti_core.prompts.models import Message
+except ImportError:
+    try:
+        from graphiti_core.prompts import Message
+    except ImportError:
+        Message = dict
+
+from mnemis_build.instrumentation import InstrumentationRecorder
 from .prompts import NODE_SELECTION_PROMPT_TEMPLATE
 
 CACHE_SIZE_PER_QUERY = 500
@@ -86,6 +107,123 @@ class Query:
 class GlobalSelectorConfig(BaseModel):
     use_summary: bool = False
     use_tag: bool = True
+    selection_model_size: str = "large"
+
+
+def _resolve_model_size(value: str | None):
+    normalized = (value or "large").strip().lower()
+    aliases = {
+        "default": "large",
+        "lg": "large",
+        "md": "medium",
+        "sm": "small",
+    }
+    normalized = aliases.get(normalized, normalized)
+    members = getattr(ModelSize, "__members__", None)
+    if isinstance(members, dict) and normalized in members:
+        return members[normalized]
+    for member_name in dir(ModelSize):
+        candidate = getattr(ModelSize, member_name)
+        if member_name.lower() == normalized:
+            return candidate
+    fallback = getattr(ModelSize, "large", None)
+    if fallback is not None:
+        return fallback
+    if isinstance(members, dict) and members:
+        return next(iter(members.values()))
+    raise ValueError(f"Unsupported ModelSize value: {value!r}")
+
+
+class InstrumentedGraphitiLLMClient:
+    def __init__(
+        self,
+        inner: LLMClient,
+        recorder: InstrumentationRecorder,
+        *,
+        default_model: str | None = None,
+        small_model: str | None = None,
+    ):
+        self.inner = inner
+        self.recorder = recorder
+        self.default_model = default_model
+        self.small_model = small_model
+
+    def __getattr__(self, item):
+        return getattr(self.inner, item)
+
+    def _snapshot_token_stats(self) -> dict[str, int]:
+        getter = getattr(self.inner, "get_token_stats", None)
+        if not callable(getter):
+            return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+        stats = getter() or {}
+        prompt_tokens = int(stats.get("prompt_tokens", stats.get("input_tokens", 0)) or 0)
+        completion_tokens = int(stats.get("completion_tokens", stats.get("output_tokens", 0)) or 0)
+        total_tokens = int(stats.get("total_tokens", prompt_tokens + completion_tokens) or 0)
+        return {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": total_tokens,
+        }
+
+    def _extract_usage_from_response(self, response: object) -> dict[str, int]:
+        if isinstance(response, dict):
+            usage = response.get("usage") or response.get("_usage") or {}
+            prompt_tokens = int(usage.get("prompt_tokens", 0) or 0)
+            completion_tokens = int(usage.get("completion_tokens", 0) or 0)
+            total_tokens = int(usage.get("total_tokens", prompt_tokens + completion_tokens) or 0)
+            return {
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": total_tokens,
+            }
+        return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+
+    def _diff_token_stats(self, before: dict[str, int], after: dict[str, int]) -> dict[str, int]:
+        delta = {
+            key: max(0, int(after.get(key, 0) or 0) - int(before.get(key, 0) or 0))
+            for key in {"prompt_tokens", "completion_tokens", "total_tokens"}
+        }
+        if any(delta.values()):
+            return delta
+        return {}
+
+    def _resolve_model_name(self, model_size) -> str | None:
+        size_name = getattr(model_size, "name", str(model_size)).lower()
+        if size_name == "small":
+            return self.small_model or self.default_model
+        return self.default_model
+
+    async def generate_response(
+        self,
+        *,
+        stage: str,
+        operation: str,
+        messages,
+        response_model,
+        model_size=None,
+        **kwargs,
+    ):
+        before = self._snapshot_token_stats()
+        start = perf_counter()
+        response = await self.inner.generate_response(
+            messages=messages,
+            response_model=response_model,
+            model_size=model_size,
+            **kwargs,
+        )
+        runtime_seconds = perf_counter() - start
+        usage = self._diff_token_stats(before, self._snapshot_token_stats()) or self._extract_usage_from_response(response)
+        self.recorder.record_llm_call(
+            stage=stage,
+            operation=operation,
+            runtime_seconds=runtime_seconds,
+            model=self._resolve_model_name(model_size),
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+            total_tokens=usage.get("total_tokens"),
+            metadata={"call_type": "graphiti.generate_response", "response_model": response_model.__name__},
+        )
+        return response
 
 
 class GlobalSelector:
@@ -93,6 +231,7 @@ class GlobalSelector:
         self.driver = driver
         self.llm_client = llm_client
         self.selection_config = selection_config
+        self.selection_model_size = _resolve_model_size(selection_config.selection_model_size)
 
     def clear_cache(self):
         self.get_max_layer.cache_clear()
@@ -240,9 +379,11 @@ class GlobalSelector:
             nodes_info='\n'.join([json.dumps(cat, ensure_ascii=False) for cat in category_context])
         )
         response = await self.llm_client.generate_response(
+            stage="global_selection",
+            operation="layer_selection",
             messages=[Message(role='user', content=prompt)],
             response_model=NodeSelectionList,
-            model_size=ModelSize.medium
+            model_size=self.selection_model_size,
         )
 
         selected_categories = []
@@ -266,11 +407,20 @@ class GlobalSelector:
         return selected_categories, shortcut_categories
 
     async def global_selection(self, query: str, group_id: str) -> tuple[dict, dict]:
+        recorder = getattr(self.llm_client, "recorder", None)
+        overall_start = time()
         start = time()
         mode = 'batch'
         time_stats = {}
         max_layer = await self.get_max_layer(group_id=group_id)
         time_stats['init'] = time() - start
+        if recorder:
+            recorder.record_stage_runtime(
+                stage="global_selection",
+                operation="init",
+                runtime_seconds=time_stats['init'],
+                metadata={"group_id": group_id},
+            )
 
         start = time()
         previous_layer_categories = []
@@ -295,10 +445,24 @@ class GlobalSelector:
             previous_layer_categories = selected
 
         time_stats['layer_selection'] = time() - start
+        if recorder:
+            recorder.record_stage_runtime(
+                stage="global_selection",
+                operation="layer_selection_total",
+                runtime_seconds=time_stats['layer_selection'],
+                metadata={"group_id": group_id, "max_layer": max_layer},
+            )
         
         start = time()
         neighbors = await self.get_one_hop_neighbors_batch([cat['uuid'] for cat in selected_categories.values()], group_id=group_id, mode=mode)
         time_stats['one_hop_neighbors'] = time() - start
+        if recorder:
+            recorder.record_stage_runtime(
+                stage="global_selection",
+                operation="one_hop_neighbors",
+                runtime_seconds=time_stats['one_hop_neighbors'],
+                metadata={"group_id": group_id, "selected_node_count": len(selected_categories)},
+            )
 
         def format(item: dict):
             if item.get('valid_at') and type(item['valid_at']) != str:
@@ -317,6 +481,13 @@ class GlobalSelector:
             'edges': edges,
             'nodes': nodes,
         }
+        if recorder:
+            recorder.record_stage_runtime(
+                stage="global_selection",
+                operation="global_selection_total",
+                runtime_seconds=time() - overall_start,
+                metadata={"group_id": group_id, "query": query},
+            )
         return results, time_stats
 
 def load_locomo_data_query_group_id(file_path, group_id_prefix='locomo_ziyu'):
@@ -457,15 +628,32 @@ async def main():
         model=os.getenv('MNEMIS_OPENAI_MODEL'),
         small_model=os.getenv('MNEMIS_OPENAI_SMALL_MODEL'),
     )
-    llm_client = OpenAIClient(client=raw_client, config=llm_config)
-    selector = GlobalSelector(driver, llm_client)
-    
+    recorder = InstrumentationRecorder(run_name=os.getenv('MNEMIS_GLOBAL_SELECTION_RUN_NAME', 'global_selection'))
+    llm_client = InstrumentedGraphitiLLMClient(
+        OpenAIClient(client=raw_client, config=llm_config),
+        recorder,
+        default_model=os.getenv('MNEMIS_OPENAI_MODEL'),
+        small_model=os.getenv('MNEMIS_OPENAI_SMALL_MODEL'),
+    )
+    selector = GlobalSelector(
+        driver,
+        llm_client,
+        selection_config=GlobalSelectorConfig(
+            selection_model_size=os.getenv('MNEMIS_GLOBAL_SELECTION_MODEL_SIZE', 'large')
+        ),
+    )
+
     start = time()
-    await parse_locomo(selector)
+    with recorder.stage_timer("global_selection", "parse_locomo"):
+        await parse_locomo(selector)
     # await parse_lme(selector)
     end = time()
     print(f"Total time taken: {end - start} s")
-    print(selector.llm_client.get_token_stats())
+    token_stats = selector.llm_client.get_token_stats() if hasattr(selector.llm_client, 'get_token_stats') else {}
+    print(token_stats)
+    report_dir = Path(os.getenv('MNEMIS_INSTRUMENTATION_DIR', 'results/instrumentation'))
+    report_paths = recorder.write_reports(report_dir, stem=recorder.run_name)
+    print(json.dumps({"instrumentation_reports": report_paths}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

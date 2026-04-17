@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+from time import perf_counter
 from typing import Any, Sequence, TypeVar
 
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
 from .config import BuildConfig
+from .instrumentation import InstrumentationRecorder
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -19,31 +21,62 @@ def build_async_openai_client(*, api_key: str, base_url: str | None = None) -> A
 
 
 class OpenAILLMClient:
-    def __init__(self, config: BuildConfig):
+    def __init__(self, config: BuildConfig, recorder: InstrumentationRecorder | None = None):
         self.client = build_async_openai_client(
             api_key=config.llm_api_key,
             base_url=config.llm_base_url,
         )
         self.config = config
+        self.recorder = recorder
+
+    def _extract_usage(self, response: Any) -> dict[str, int]:
+        usage = getattr(response, "usage", None)
+        if usage is None:
+            return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+        prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+        completion_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
+        total_tokens = int(getattr(usage, "total_tokens", prompt_tokens + completion_tokens) or 0)
+        return {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": total_tokens,
+        }
 
     async def complete_json(
         self,
         model: type[T],
         messages: Sequence[dict[str, str]],
         *,
+        stage: str | None = None,
+        operation: str | None = None,
         use_small_model: bool = False,
         model_name: str | None = None,
         temperature: float = 0.0,
         require_json_object: bool = True,
     ) -> T:
+        selected_model = model_name or (self.config.small_llm_model if use_small_model else self.config.llm_model)
         request: dict[str, Any] = {
-            "model": model_name or (self.config.small_llm_model if use_small_model else self.config.llm_model),
+            "model": selected_model,
             "temperature": temperature,
             "messages": list(messages),
         }
         if require_json_object:
             request["response_format"] = {"type": "json_object"}
+        start = perf_counter()
         response = await self.client.chat.completions.create(**request)
+        runtime_seconds = perf_counter() - start
+        if self.recorder and stage and operation:
+            usage = self._extract_usage(response)
+            self.recorder.record_llm_call(
+                stage=stage,
+                operation=operation,
+                runtime_seconds=runtime_seconds,
+                model=selected_model,
+                prompt_tokens=usage["prompt_tokens"],
+                completion_tokens=usage["completion_tokens"],
+                total_tokens=usage["total_tokens"],
+                metadata={"call_type": "chat.completions", "response_model": model.__name__},
+            )
         content = response.choices[0].message.content or "{}"
         return self.parse_json_response(model, content)
 
@@ -69,15 +102,32 @@ class OpenAILLMClient:
         self,
         messages: Sequence[dict[str, str]],
         *,
+        stage: str | None = None,
+        operation: str | None = None,
         use_small_model: bool = False,
         model_name: str | None = None,
         temperature: float = 0.0,
     ) -> str:
+        selected_model = model_name or (self.config.small_llm_model if use_small_model else self.config.llm_model)
+        start = perf_counter()
         response = await self.client.chat.completions.create(
-            model=model_name or (self.config.small_llm_model if use_small_model else self.config.llm_model),
+            model=selected_model,
             temperature=temperature,
             messages=list(messages),
         )
+        runtime_seconds = perf_counter() - start
+        if self.recorder and stage and operation:
+            usage = self._extract_usage(response)
+            self.recorder.record_llm_call(
+                stage=stage,
+                operation=operation,
+                runtime_seconds=runtime_seconds,
+                model=selected_model,
+                prompt_tokens=usage["prompt_tokens"],
+                completion_tokens=usage["completion_tokens"],
+                total_tokens=usage["total_tokens"],
+                metadata={"call_type": "chat.completions"},
+            )
         return response.choices[0].message.content or ""
 
     async def rerank(
@@ -113,9 +163,23 @@ class OpenAILLMClient:
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
         if not texts:
             return []
+        start = perf_counter()
         response = await self.client.embeddings.create(
             model=self.config.embedding_model,
             input=list(texts),
             dimensions=self.config.embedding_dim,
         )
+        runtime_seconds = perf_counter() - start
+        if self.recorder:
+            usage = self._extract_usage(response)
+            self.recorder.record_llm_call(
+                stage="embeddings",
+                operation="embed",
+                runtime_seconds=runtime_seconds,
+                model=self.config.embedding_model,
+                prompt_tokens=usage["prompt_tokens"],
+                completion_tokens=usage["completion_tokens"],
+                total_tokens=usage["total_tokens"],
+                metadata={"call_type": "embeddings", "input_count": len(texts)},
+            )
         return [item.embedding for item in response.data]

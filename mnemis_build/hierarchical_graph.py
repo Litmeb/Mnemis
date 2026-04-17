@@ -127,6 +127,8 @@ class HierarchicalGraphBuilder:
                     ),
                 },
             ],
+            stage="hierarchical_graph_ingestion",
+            operation="category_assignment",
             require_json_object=False,
         )
 
@@ -256,6 +258,8 @@ class HierarchicalGraphBuilder:
                     "content": build_category_details_user_prompt(layer, "\n\n".join(category_blocks)),
                 },
             ],
+            stage="hierarchical_graph_ingestion",
+            operation="category_detail_generation",
         )
         return {
             category.name: {

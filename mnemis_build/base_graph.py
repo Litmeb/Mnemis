@@ -108,6 +108,8 @@ class BaseGraphBuilder:
                 {"role": "system", "content": ENTITY_NAME_EXTRACTION_PROMPT},
                 {"role": "user", "content": context},
             ],
+            stage="base_graph_ingestion",
+            operation="entity_name_extraction",
             use_small_model=True,
         )
         names = OrderedDict((name.strip(), None) for name in extraction.names if name.strip())
@@ -122,6 +124,8 @@ class BaseGraphBuilder:
                     {"role": "system", "content": ENTITY_REFLECTION_PROMPT},
                     {"role": "user", "content": f"{context}\n\nAlready extracted: {json.dumps(list(names.keys()), ensure_ascii=False)}"},
                 ],
+                stage="base_graph_ingestion",
+                operation="entity_name_reflection",
                 use_small_model=True,
             )
             for name in reflection.names:
@@ -181,6 +185,8 @@ class BaseGraphBuilder:
                 {"role": "system", "content": ENTITY_DETAILS_PROMPT},
                 {"role": "user", "content": json.dumps(detail_payload, ensure_ascii=False)},
             ],
+            stage="base_graph_ingestion",
+            operation="entity_detail_generation",
         )
         existing_by_normalized_name = {
             self._normalize_text(name): entity
@@ -231,6 +237,8 @@ class BaseGraphBuilder:
                 {"role": "system", "content": EDGE_EXTRACTION_PROMPT},
                 {"role": "user", "content": json.dumps(edge_payload, ensure_ascii=False)},
             ],
+            stage="base_graph_ingestion",
+            operation="edge_extraction",
         )
         edges = extraction.edges
         for _ in range(self.config.max_reflection_rounds):
@@ -251,6 +259,8 @@ class BaseGraphBuilder:
                         ),
                     },
                 ],
+                stage="base_graph_ingestion",
+                operation="edge_reflection",
             )
             seen = {(edge.source_entity_name, edge.target_entity_name, edge.fact) for edge in edges}
             for edge in reflection.edges:

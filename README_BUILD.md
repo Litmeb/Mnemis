@@ -83,6 +83,8 @@ $env:MNEMIS_ENTITY_TOP_K="20"
 $env:MNEMIS_EDGE_TOP_K="20"
 $env:MNEMIS_RETRIEVAL_CANDIDATE_LIMIT="50"
 $env:MNEMIS_RRF_K="60"
+$env:MNEMIS_INSTRUMENTATION_DIR="results/instrumentation"
+$env:MNEMIS_GLOBAL_SELECTION_MODEL_SIZE="large"
 ```
 
 ## Install
@@ -98,6 +100,14 @@ Rebuild one LoCoMo user into local Neo4j:
 ```powershell
 python .\build_mnemis_graph.py rebuild-locomo --group-id locomo_user_0 --user-index 0
 ```
+
+Each `rebuild-locomo` run now emits lightweight instrumentation reports into `results/instrumentation` by default:
+
+- `<run>.json`: full structured event log plus per-stage summaries
+- `<run>_summary.csv`: one row per stage / operation
+- `<run>_events.csv`: one row per recorded LLM call or timed stage
+
+The reports include prompt tokens, completion tokens, total tokens, model names, and wall-clock runtime so you can line them up against the paper's Table 3 at a stage level.
 
 Retrieve memory for one query:
 
