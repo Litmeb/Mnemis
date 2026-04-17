@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from typing import Any
 
@@ -25,11 +26,11 @@ class Neo4jGraphStore:
     async def close(self) -> None:
         await self.driver.close()
 
-    async def execute(self, query: str, **parameters: Any):
+    async def execute(self, cypher: str, **parameters: Any):
         kwargs = dict(parameters)
         if self.config.neo4j_database:
             kwargs["database_"] = self.config.neo4j_database
-        return await self.driver.execute_query(query, **kwargs)
+        return await self.driver.execute_query(cypher, **kwargs)
 
     def _sanitize_fulltext_query(self, text: str) -> str:
         tokens = re.findall(r"[\w-]+", text or "", flags=re.UNICODE)
@@ -75,6 +76,16 @@ class Neo4jGraphStore:
         ]
         for query in queries:
             await self.execute(query)
+
+    async def clear_group(self, group_id: str) -> None:
+        await self.execute(
+            """
+            MATCH (n)
+            WHERE n.group_id = $group_id
+            DETACH DELETE n
+            """,
+            group_id=group_id,
+        )
 
     async def fetch_recent_episodes(self, group_id: str, limit: int) -> list[dict[str, Any]]:
         result = await self.execute(
@@ -336,22 +347,29 @@ class Neo4jGraphStore:
         )
 
     async def upsert_episode(self, group_id: str, episode_uuid: str, episode: EpisodeInput, embedding: list[float]) -> None:
+        metadata_json = json.dumps(
+            {key: value for key, value in episode.metadata.items() if value is not None},
+            ensure_ascii=False,
+            sort_keys=True,
+        )
         await self.execute(
             """
             MERGE (e:Episodic {uuid: $uuid})
             SET e.group_id = $group_id,
+                e.speaker = $speaker,
                 e.content = $content,
                 e.valid_at = datetime($valid_at),
                 e.source_id = $source_id,
-                e.metadata = $metadata,
+                e.metadata_json = $metadata_json,
                 e.episode_embedding = $embedding
             """,
             uuid=episode_uuid,
             group_id=group_id,
+            speaker=episode.speaker,
             content=episode.content,
             valid_at=episode.valid_at.isoformat(),
             source_id=episode.source_id,
-            metadata=episode.metadata,
+            metadata_json=metadata_json,
             embedding=embedding,
         )
 

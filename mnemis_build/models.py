@@ -25,7 +25,7 @@ class EntityNameExtraction(BaseModel):
 
 class EntityRecord(BaseModel):
     uuid: str = Field(default_factory=lambda: make_uuid("entity"))
-    group_id: str
+    group_id: str = ""
     name: str
     summary: str
     tag: list[str] = Field(default_factory=list)
@@ -36,7 +36,7 @@ class EntityRecord(BaseModel):
 
 class EdgeRecord(BaseModel):
     uuid: str = Field(default_factory=lambda: make_uuid("fact"))
-    group_id: str
+    group_id: str = ""
     source_entity_name: str
     target_entity_name: str
     fact: str
@@ -50,6 +50,29 @@ class EntityExtractionPayload(BaseModel):
 
 class EdgeExtractionPayload(BaseModel):
     edges: list[EdgeRecord]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_top_level_shape(cls, value: object) -> object:
+        if isinstance(value, list):
+            return {"edges": value}
+        if isinstance(value, dict):
+            if "edges" in value:
+                return value
+            for alias in ("missing_edges", "new_edges", "additional_edges"):
+                if alias in value:
+                    return {"edges": value.get(alias) or []}
+            for candidate in value.values():
+                if (
+                    isinstance(candidate, list)
+                    and all(
+                        isinstance(item, dict)
+                        and {"source_entity_name", "target_entity_name", "fact"}.issubset(item.keys())
+                        for item in candidate
+                    )
+                ):
+                    return {"edges": candidate}
+        return value
 
 
 class IndexedNode(BaseModel):

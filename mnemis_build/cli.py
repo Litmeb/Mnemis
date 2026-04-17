@@ -27,6 +27,7 @@ async def _run_rebuild_locomo(args: argparse.Namespace) -> None:
         base_builder = BaseGraphBuilder(store, llm, config)
         hierarchy_builder = HierarchicalGraphBuilder(store, llm, config)
         episodes = load_locomo_episodes(args.data, user_index=args.user_index, group_id=args.group_id)
+        await store.clear_group(args.group_id)
         with recorder.stage_timer(
             "base_graph_ingestion",
             "build",

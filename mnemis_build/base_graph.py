@@ -58,6 +58,12 @@ class BaseGraphBuilder:
     def _normalize_text(self, value: str) -> str:
         return " ".join(value.lower().split())
 
+    def _normalize_generated_uuid(self, value: str | None, prefix: str) -> str:
+        raw = (value or "").strip()
+        if raw.startswith(f"{prefix}_"):
+            return raw
+        return make_uuid(prefix)
+
     def _forced_speaker_name(self, episode: EpisodeInput) -> str | None:
         if not self.config.force_base_speaker_entity:
             return None
@@ -207,8 +213,7 @@ class BaseGraphBuilder:
                 entity.is_speaker = seed.is_speaker
             if normalized_name in forced_speaker_names:
                 entity.is_speaker = True
-            if not entity.uuid:
-                entity.uuid = make_uuid("entity")
+            entity.uuid = seed.uuid if seed is not None else self._normalize_generated_uuid(entity.uuid, "entity")
             entity.group_id = group_id
             if episode_uuid not in entity.episode_idx:
                 entity.episode_idx.append(episode_uuid)
@@ -272,8 +277,7 @@ class BaseGraphBuilder:
         entities_by_name = await self.store.fetch_entities_by_name(group_id, [entity.name for entity in entities])
         fact_embeddings = await self.llm.embed([edge.fact for edge in edges])
         for edge, fact_embedding in zip(edges, fact_embeddings):
-            if not edge.uuid:
-                edge.uuid = make_uuid("fact")
+            edge.uuid = self._normalize_generated_uuid(edge.uuid, "fact")
             edge.group_id = group_id
             source = entities_by_name.get(edge.source_entity_name)
             target = entities_by_name.get(edge.target_entity_name)
