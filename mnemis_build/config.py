@@ -12,6 +12,20 @@ def _pick_env(*keys: str, default: str | None = None) -> str | None:
     return default
 
 
+def _pick_bool_env(*keys: str, default: bool) -> bool:
+    value = _pick_env(*keys)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _normalize_rerank_mode(value: str | None) -> str:
+    normalized = (value or "auto").strip().lower()
+    if normalized in {"auto", "true_reranker", "llm_scoring"}:
+        return normalized
+    return "auto"
+
+
 @dataclass(slots=True)
 class BuildConfig:
     neo4j_url: str
@@ -22,7 +36,11 @@ class BuildConfig:
     llm_base_url: str | None
     llm_model: str
     small_llm_model: str
+    rerank_mode: str
+    reranker_api_key: str | None
+    reranker_base_url: str | None
     reranker_model: str | None
+    rerank_allow_llm_fallback: bool
     embedding_model: str
     embedding_dim: int
     recent_episode_window: int
@@ -60,7 +78,11 @@ class BuildConfig:
             llm_base_url=_pick_env("MNEMIS_OPENAI_BASE_URL", "MNEMIS_BASE_URL"),
             llm_model=_pick_env("MNEMIS_OPENAI_MODEL", "MNEMIS_MODEL", default="gpt-4.1-mini") or "gpt-4.1-mini",
             small_llm_model=_pick_env("MNEMIS_OPENAI_SMALL_MODEL", "MNEMIS_SMALL_MODEL", default="gpt-4.1-mini") or "gpt-4.1-mini",
+            rerank_mode=_normalize_rerank_mode(_pick_env("MNEMIS_RERANK_MODE", default="auto")),
+            reranker_api_key=_pick_env("MNEMIS_RERANKER_API_KEY", "MNEMIS_OPENAI_API_KEY", "MNEMIS_API_KEY"),
+            reranker_base_url=_pick_env("MNEMIS_RERANKER_BASE_URL", "MNEMIS_OPENAI_BASE_URL", "MNEMIS_BASE_URL"),
             reranker_model=_pick_env("MNEMIS_RERANKER_MODEL"),
+            rerank_allow_llm_fallback=_pick_bool_env("MNEMIS_RERANK_ALLOW_LLM_FALLBACK", default=True),
             embedding_model=_pick_env("MNEMIS_EMBEDDING_MODEL", default="Qwen/Qwen3-Embedding-0.6B") or "Qwen/Qwen3-Embedding-0.6B",
             embedding_dim=int(_pick_env("EMBEDDING_DIM", default="128") or "128"),
             recent_episode_window=int(_pick_env("MNEMIS_RECENT_EPISODE_WINDOW", default="6") or "6"),

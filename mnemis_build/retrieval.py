@@ -8,14 +8,13 @@ from global_selection.prompts import NODE_SELECTION_PROMPT_TEMPLATE
 
 from .config import BuildConfig
 from .llm import OpenAILLMClient
-from .models import NodeSelectionList, RerankPayload
+from .models import NodeSelectionList
 from .neo4j_store import Neo4jGraphStore
 from .prompts import (
     ANSWER_SYSTEM_PROMPT,
-    RERANK_SYSTEM_PROMPT,
     build_answer_user_prompt,
-    build_rerank_user_prompt,
 )
+from .reranker import RerankCandidate, RerankBackendStatus, build_reranker
 
 
 class MnemisRetriever:
@@ -23,6 +22,7 @@ class MnemisRetriever:
         self.store = store
         self.llm = llm
         self.config = config
+        self.reranker = build_reranker(llm, config)
 
     def _normalize_timestamp(self, value: Any) -> str | Any:
         if isinstance(value, datetime):
@@ -176,49 +176,42 @@ class MnemisRetriever:
         item_type: str,
         items: list[dict[str, Any]],
         top_k: int,
-    ) -> list[dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], RerankBackendStatus]:
         if not items:
-            return []
+            empty_status = self.reranker.last_status or RerankBackendStatus(
+                mode="not_used",
+                backend="none",
+                model=None,
+                requested_mode=self.config.rerank_mode,
+            )
+            return [], empty_status
         candidates = [
-            {
-                "uuid": item["uuid"],
-                "text": self._candidate_text(item_type, item),
-            }
+            RerankCandidate(
+                uuid=item["uuid"],
+                text=self._candidate_text(item_type, item),
+            )
             for item in items
         ]
-        prompt = build_rerank_user_prompt(query, item_type, json.dumps(candidates, ensure_ascii=False, indent=2))
-        rerank_model = self.config.reranker_model or self.config.small_llm_model
-        try:
-            scores = await self.llm.complete_json(
-                RerankPayload,
-                [
-                    {"role": "system", "content": RERANK_SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt},
-                ],
-                model_name=rerank_model,
+        response = await self.reranker.rerank(query=query, item_type=item_type, candidates=candidates)
+        ranked = sorted(
+            items,
+            key=lambda item: (
+                response.scores.get(item["uuid"], -1.0),
+                item.get("route_score", 0.0),
+                item.get("rrf_score", 0.0),
+            ),
+            reverse=True,
+        )
+        enriched: list[dict[str, Any]] = []
+        for item in ranked[:top_k]:
+            enriched.append(
+                {
+                    **item,
+                    "rerank_score": response.scores.get(item["uuid"]),
+                    "rerank_mode": response.status.mode,
+                }
             )
-            score_by_uuid = {item.uuid: item.score for item in scores.items}
-            ranked = sorted(
-                items,
-                key=lambda item: (
-                    score_by_uuid.get(item["uuid"], -1.0),
-                    item.get("route_score", 0.0),
-                    item.get("rrf_score", 0.0),
-                ),
-                reverse=True,
-            )
-        except Exception:
-            ranked = sorted(
-                items,
-                key=lambda item: (
-                    item.get("route_score", 0.0),
-                    item.get("rrf_score", 0.0),
-                    item.get("similarity_score", 0.0),
-                    item.get("fulltext_score", 0.0),
-                ),
-                reverse=True,
-            )
-        return ranked[:top_k]
+        return enriched, response.status
 
     def _format_context(
         self,
@@ -249,12 +242,25 @@ class MnemisRetriever:
         system1 = await self._system1_retrieve(query, group_id)
         system2 = await self._system2_retrieve(query, group_id)
         merged = self._merge_route_items(system1, system2)
-        episodes = await self._rerank_items(query, "episodes", merged["episodes"], self.config.episode_top_k)
-        nodes = await self._rerank_items(query, "nodes", merged["nodes"], self.config.entity_top_k)
-        edges = await self._rerank_items(query, "edges", merged["edges"], self.config.edge_top_k)
+        episodes, episode_rerank = await self._rerank_items(query, "episodes", merged["episodes"], self.config.episode_top_k)
+        nodes, node_rerank = await self._rerank_items(query, "nodes", merged["nodes"], self.config.entity_top_k)
+        edges, edge_rerank = await self._rerank_items(query, "edges", merged["edges"], self.config.edge_top_k)
+        active_status = edge_rerank or node_rerank or episode_rerank
         return {
             "system1": system1,
             "system2": system2,
+            "rerank": {
+                "configured_mode": self.config.rerank_mode,
+                "active_mode": active_status.mode,
+                "backend": active_status.backend,
+                "model": active_status.model,
+                "fallback_reason": active_status.fallback_reason,
+                "per_type": {
+                    "episodes": episode_rerank.to_dict(),
+                    "nodes": node_rerank.to_dict(),
+                    "edges": edge_rerank.to_dict(),
+                },
+            },
             "final": {
                 "episodes": episodes,
                 "nodes": nodes,

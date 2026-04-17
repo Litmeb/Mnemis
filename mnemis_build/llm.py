@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Sequence, TypeVar
+from typing import Any, Sequence, TypeVar
 
 from openai import AsyncOpenAI
 from pydantic import BaseModel
@@ -11,12 +11,19 @@ from .config import BuildConfig
 T = TypeVar("T", bound=BaseModel)
 
 
+def build_async_openai_client(*, api_key: str, base_url: str | None = None) -> AsyncOpenAI:
+    client_args = {"api_key": api_key}
+    if base_url:
+        client_args["base_url"] = base_url
+    return AsyncOpenAI(**client_args)
+
+
 class OpenAILLMClient:
     def __init__(self, config: BuildConfig):
-        client_args = {"api_key": config.llm_api_key}
-        if config.llm_base_url:
-            client_args["base_url"] = config.llm_base_url
-        self.client = AsyncOpenAI(**client_args)
+        self.client = build_async_openai_client(
+            api_key=config.llm_api_key,
+            base_url=config.llm_base_url,
+        )
         self.config = config
 
     async def complete_json(
@@ -51,6 +58,36 @@ class OpenAILLMClient:
             messages=list(messages),
         )
         return response.choices[0].message.content or ""
+
+    async def rerank(
+        self,
+        *,
+        query: str,
+        documents: Sequence[str],
+        model_name: str,
+        top_n: int | None = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
+    ) -> dict[str, Any]:
+        client = (
+            self.client
+            if (api_key is None or api_key == self.config.llm_api_key)
+            and (base_url is None or base_url == self.config.llm_base_url)
+            else build_async_openai_client(
+                api_key=api_key or self.config.llm_api_key,
+                base_url=base_url if base_url is not None else self.config.llm_base_url,
+            )
+        )
+        return await client.post(
+            "/rerank",
+            cast_to=dict,
+            body={
+                "model": model_name,
+                "query": query,
+                "documents": list(documents),
+                "top_n": top_n or len(documents),
+            },
+        )
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
         if not texts:
