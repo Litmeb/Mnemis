@@ -50,6 +50,8 @@ class BuildConfig:
     neo4j_database: str | None
     llm_api_key: str
     llm_base_url: str | None
+    embedding_api_key: str | None
+    embedding_base_url: str | None
     llm_model: str
     small_llm_model: str
     rerank_mode: str
@@ -94,6 +96,8 @@ class BuildConfig:
             neo4j_database=_pick_env("MNEMIS_NEO4J_DATABASE", "NEO4J_DATABASE"),
             llm_api_key=llm_api_key,
             llm_base_url=_pick_env("MNEMIS_OPENAI_BASE_URL", "MNEMIS_BASE_URL"),
+            embedding_api_key=_pick_env("MNEMIS_EMBEDDING_API_KEY", "MNEMIS_OPENAI_API_KEY", "MNEMIS_API_KEY"),
+            embedding_base_url=_pick_env("MNEMIS_EMBEDDING_BASE_URL", "MNEMIS_OPENAI_BASE_URL", "MNEMIS_BASE_URL"),
             llm_model=_pick_env("MNEMIS_OPENAI_MODEL", "MNEMIS_MODEL", default="gpt-4.1-mini") or "gpt-4.1-mini",
             small_llm_model=_pick_env("MNEMIS_OPENAI_SMALL_MODEL", "MNEMIS_SMALL_MODEL", default="gpt-4.1-mini") or "gpt-4.1-mini",
             rerank_mode=_normalize_rerank_mode(_pick_env("MNEMIS_RERANK_MODE", default="auto")),

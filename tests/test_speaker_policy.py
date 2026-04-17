@@ -15,6 +15,8 @@ def _build_config(*, speaker_hierarchy_mode: str = "paper_v2", force_base_speake
         neo4j_database=None,
         llm_api_key="test-key",
         llm_base_url=None,
+        embedding_api_key="test-key",
+        embedding_base_url=None,
         llm_model="gpt-4.1-mini",
         small_llm_model="gpt-4.1-mini",
         rerank_mode="auto",
@@ -126,3 +128,107 @@ def test_base_graph_forced_speaker_name_can_be_disabled() -> None:
     )
 
     assert builder._forced_speaker_name(episode) is None
+
+
+def test_base_graph_build_processes_episodes_in_input_order() -> None:
+    class _FakeStore:
+        def __init__(self) -> None:
+            self.source_ids: list[str] = []
+
+        async def ensure_indexes(self) -> None:
+            return None
+
+        async def fetch_recent_episodes(self, group_id, limit):
+            return []
+
+        async def upsert_episode(self, group_id, episode_uuid, episode, embedding) -> None:
+            self.source_ids.append(episode.source_id)
+
+    builder = object.__new__(BaseGraphBuilder)
+    builder.config = _build_config()
+    builder.store = _FakeStore()
+    builder.llm = None
+
+    class _FakeLLM:
+        async def embed(self, texts):
+            return [[0.0] for _ in texts]
+
+    builder.llm = _FakeLLM()
+
+    async def _fake_extract_entities(self, group_id, episode_uuid, episode, context):
+        return []
+
+    async def _fake_extract_edges(self, group_id, context, entities) -> None:
+        return None
+
+    builder._extract_entities = MethodType(_fake_extract_entities, builder)
+    builder._extract_edges = MethodType(_fake_extract_edges, builder)
+
+    episodes = [
+        EpisodeInput(
+            speaker="Alice",
+            content="turn 0",
+            valid_at="2026-01-01T00:00:00",
+            source_id="ep-1",
+        ),
+        EpisodeInput(
+            speaker="Alice",
+            content="turn 1",
+            valid_at="2026-01-01T00:00:00",
+            source_id="ep-2",
+        ),
+        EpisodeInput(
+            speaker="Bob",
+            content="turn 2",
+            valid_at="2026-01-02T00:00:00",
+            source_id="ep-3",
+        ),
+    ]
+
+    asyncio.run(builder.build("group-1", episodes))
+
+    assert builder.store.source_ids == ["ep-1", "ep-2", "ep-3"]
+
+
+def test_base_graph_build_reports_turn_progress() -> None:
+    class _FakeStore:
+        async def ensure_indexes(self) -> None:
+            return None
+
+        async def fetch_recent_episodes(self, group_id, limit):
+            return []
+
+        async def upsert_episode(self, group_id, episode_uuid, episode, embedding) -> None:
+            return None
+
+    class _FakeLLM:
+        async def embed(self, texts):
+            return [[0.0] for _ in texts]
+
+    builder = object.__new__(BaseGraphBuilder)
+    builder.config = _build_config()
+    builder.store = _FakeStore()
+    builder.llm = _FakeLLM()
+
+    async def _fake_extract_entities(self, group_id, episode_uuid, episode, context):
+        return []
+
+    async def _fake_extract_edges(self, group_id, context, entities) -> None:
+        return None
+
+    builder._extract_entities = MethodType(_fake_extract_entities, builder)
+    builder._extract_edges = MethodType(_fake_extract_edges, builder)
+
+    progress_events: list[tuple[int, int, str]] = []
+
+    async def _progress_callback(completed_count, total_count, episode) -> None:
+        progress_events.append((completed_count, total_count, episode.source_id))
+
+    episodes = [
+        EpisodeInput(speaker="Alice", content="turn 0", valid_at="2026-01-01T00:00:00", source_id="ep-1"),
+        EpisodeInput(speaker="Alice", content="turn 1", valid_at="2026-01-01T00:00:00", source_id="ep-2"),
+    ]
+
+    asyncio.run(builder.build("group-1", episodes, progress_callback=_progress_callback))
+
+    assert progress_events == [(1, 2, "ep-1"), (2, 2, "ep-2")]

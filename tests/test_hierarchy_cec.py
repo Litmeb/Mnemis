@@ -18,6 +18,8 @@ def _build_config(
         neo4j_database=None,
         llm_api_key="test-key",
         llm_base_url=None,
+        embedding_api_key="test-key",
+        embedding_base_url=None,
         llm_model="gpt-4.1-mini",
         small_llm_model="gpt-4.1-mini",
         rerank_mode="auto",

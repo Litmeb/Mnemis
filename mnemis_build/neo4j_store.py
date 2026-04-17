@@ -256,8 +256,9 @@ class Neo4jGraphStore:
             WHERE relationship.group_id = $group_id
               AND a.uuid = $source_uuid
               AND b.uuid = $target_uuid
+            WITH relationship, score, properties(relationship) AS rel_props
             RETURN relationship.uuid AS uuid, relationship.fact AS fact,
-                   relationship.valid_at AS valid_at, relationship.invalid_at AS invalid_at,
+                   relationship.valid_at AS valid_at, rel_props['invalid_at'] AS invalid_at,
                    score AS fulltext_score
             ORDER BY fulltext_score DESC
             LIMIT $limit
@@ -277,8 +278,9 @@ class Neo4jGraphStore:
                  reduce(dot = 0.0, i IN range(0, size($embedding) - 1) | dot + ($embedding[i] * r.fact_embedding[i])) AS dot,
                  sqrt(reduce(a = 0.0, x IN $embedding | a + x * x)) AS q_norm,
                  sqrt(reduce(b = 0.0, x IN r.fact_embedding | b + x * x)) AS n_norm
-            WITH r, CASE WHEN q_norm = 0 OR n_norm = 0 THEN 0.0 ELSE dot / (q_norm * n_norm) END AS similarity_score
-            RETURN r.uuid AS uuid, r.fact AS fact, r.valid_at AS valid_at, r.invalid_at AS invalid_at, similarity_score
+            WITH r, CASE WHEN q_norm = 0 OR n_norm = 0 THEN 0.0 ELSE dot / (q_norm * n_norm) END AS similarity_score,
+                 properties(r) AS rel_props
+            RETURN r.uuid AS uuid, r.fact AS fact, r.valid_at AS valid_at, rel_props['invalid_at'] AS invalid_at, similarity_score
             ORDER BY similarity_score DESC
             LIMIT $limit
             """,
@@ -307,8 +309,9 @@ class Neo4jGraphStore:
             CALL db.index.fulltext.queryRelationships('edge_fact_ft', $query) YIELD relationship, score
             MATCH (a:Entity)-[relationship]->(b:Entity)
             WHERE relationship.group_id = $group_id
+            WITH a, b, relationship, score, properties(relationship) AS rel_props
             RETURN relationship.uuid AS uuid, relationship.fact AS fact,
-                   relationship.valid_at AS valid_at, relationship.invalid_at AS invalid_at,
+                   relationship.valid_at AS valid_at, rel_props['invalid_at'] AS invalid_at,
                    a.uuid AS source_uuid, a.name AS source_name,
                    b.uuid AS target_uuid, b.name AS target_name,
                    score AS fulltext_score
@@ -328,8 +331,9 @@ class Neo4jGraphStore:
                  reduce(dot = 0.0, i IN range(0, size($embedding) - 1) | dot + ($embedding[i] * r.fact_embedding[i])) AS dot,
                  sqrt(reduce(a_norm = 0.0, x IN $embedding | a_norm + x * x)) AS q_norm,
                  sqrt(reduce(b_norm = 0.0, x IN r.fact_embedding | b_norm + x * x)) AS n_norm
-            WITH a, b, r, CASE WHEN q_norm = 0 OR n_norm = 0 THEN 0.0 ELSE dot / (q_norm * n_norm) END AS similarity_score
-            RETURN r.uuid AS uuid, r.fact AS fact, r.valid_at AS valid_at, r.invalid_at AS invalid_at,
+            WITH a, b, r, CASE WHEN q_norm = 0 OR n_norm = 0 THEN 0.0 ELSE dot / (q_norm * n_norm) END AS similarity_score,
+                 properties(r) AS rel_props
+            RETURN r.uuid AS uuid, r.fact AS fact, r.valid_at AS valid_at, rel_props['invalid_at'] AS invalid_at,
                    a.uuid AS source_uuid, a.name AS source_name,
                    b.uuid AS target_uuid, b.name AS target_name,
                    similarity_score
@@ -571,7 +575,8 @@ class Neo4jGraphStore:
             """
             MATCH (n)-[r:RELATES_TO]-(m:Entity)
             WHERE n.group_id = $group_id AND n.uuid IN $node_uuids
-            RETURN DISTINCT r.uuid AS uuid, r.fact AS fact, r.valid_at AS valid_at, r.invalid_at AS invalid_at,
+            WITH DISTINCT r, m, properties(r) AS rel_props
+            RETURN DISTINCT r.uuid AS uuid, r.fact AS fact, r.valid_at AS valid_at, rel_props['invalid_at'] AS invalid_at,
                             m.uuid AS entity_uuid, m.name AS name, m.tag AS tag, m.summary AS summary
             """,
             group_id=group_id,

@@ -95,13 +95,15 @@ class Query:
     GET_ONE_HOP_NODES_AND_EDGES = """
     match (n)-[r:RELATES_TO]-(m:Entity)
     where n.group_id = $group_id and n.uuid = $node_uuid
-    return r.uuid as fact_uuid, r.fact as fact, r.valid_at as valid_at, r.invalid_at as invalid_at, m.uuid as entity_uuid, m.name as name, m.tag as tag, m.summary as summary
+    with r, m, properties(r) as rel_props
+    return r.uuid as fact_uuid, r.fact as fact, r.valid_at as valid_at, rel_props['invalid_at'] as invalid_at, m.uuid as entity_uuid, m.name as name, m.tag as tag, m.summary as summary
     """
     
     GET_ONE_HOP_NODES_AND_EDGES_BATCH = """
     match (n)-[r:RELATES_TO]-(m:Entity)
     where n.group_id = $group_id and n.uuid in $node_uuids
-    return r.uuid as fact_uuid, r.fact as fact, r.valid_at as valid_at, r.invalid_at as invalid_at, m.uuid as entity_uuid, m.name as name, m.tag as tag, m.summary as summary
+    with r, m, properties(r) as rel_props
+    return r.uuid as fact_uuid, r.fact as fact, r.valid_at as valid_at, rel_props['invalid_at'] as invalid_at, m.uuid as entity_uuid, m.name as name, m.tag as tag, m.summary as summary
     """
 
 class GlobalSelectorConfig(BaseModel):
@@ -490,12 +492,13 @@ class GlobalSelector:
             )
         return results, time_stats
 
-def load_locomo_data_query_group_id(file_path, group_id_prefix='locomo_ziyu'):
+def load_locomo_data_query_group_id(file_path, group_id_prefix='locomo_ziyu', excluded_categories=None):
     """
     Load the locomo data from a JSON file.
     
     Args:
         file_path (str): The path to the JSON file containing locomo data.
+        excluded_categories (set[int] | None): QA categories to skip.
         
     Returns:
         dict: The locomo data as a dictionary.
@@ -503,14 +506,24 @@ def load_locomo_data_query_group_id(file_path, group_id_prefix='locomo_ziyu'):
     with open(file_path, 'r', encoding='utf-8') as file:
         data = json.load(file)
     query_groupid_list = []
+    excluded_categories = set(excluded_categories or [])
     
     for user_id, user_data in enumerate(data):
         for query_data in user_data['qa']:
+            if query_data.get('category') in excluded_categories:
+                continue
             query_groupid_list.append({
                 'group_id': f"{group_id_prefix}_{user_id}",
-                'query': query_data['question']
+                'query': query_data['question'],
+                'category': query_data.get('category')
             })
-    print(f"Loaded {len(query_groupid_list)} queries from locomo data.")
+    if excluded_categories:
+        print(
+            f"Loaded {len(query_groupid_list)} queries from locomo data "
+            f"(excluded categories: {sorted(excluded_categories)})."
+        )
+    else:
+        print(f"Loaded {len(query_groupid_list)} queries from locomo data.")
     return query_groupid_list
 
 def load_lme_data_query_group_id(file_path, group_id_prefix='lme_s_ziyu'):
@@ -562,8 +575,18 @@ async def parse_locomo(selector: GlobalSelector):
     batch_size = int(os.getenv('MNEMIS_LOCOMO_BATCH_SIZE', '50'))
     data_path = os.getenv('MNEMIS_LOCOMO_DATA', 'data/locomo.json')
     output_path = os.getenv('MNEMIS_LOCOMO_OUTPUT', 'results/v2_locomo_mnemis_coreAI_tel_b20_nec_full.json')
+    excluded_categories_env = os.getenv('MNEMIS_LOCOMO_EXCLUDE_CATEGORIES', '5')
+    excluded_categories = {
+        int(part.strip())
+        for part in excluded_categories_env.split(',')
+        if part.strip()
+    }
 
-    query_groupid_list = load_locomo_data_query_group_id(data_path, group_id_prefix=group_id_prefix)
+    query_groupid_list = load_locomo_data_query_group_id(
+        data_path,
+        group_id_prefix=group_id_prefix,
+        excluded_categories=excluded_categories,
+    )
     all_data_count = len(query_groupid_list)
     output_dir = os.path.dirname(output_path)
     if output_dir:

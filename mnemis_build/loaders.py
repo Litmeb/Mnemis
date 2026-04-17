@@ -35,7 +35,7 @@ def load_locomo_episodes(file_path: str | Path, *, user_index: int, group_id: st
         raw_dt = conversation.get(f"session_{session_no}_date_time")
         valid_at = _parse_locomo_datetime(raw_dt)
         turns = conversation[key]
-        for turn in turns:
+        for turn_index, turn in enumerate(turns):
             content = turn.get("text", "").strip()
             if not content:
                 continue
@@ -49,7 +49,14 @@ def load_locomo_episodes(file_path: str | Path, *, user_index: int, group_id: st
                         "query": turn.get("query"),
                         "blip_caption": turn.get("blip_caption"),
                         "img_url": turn.get("img_url"),
+                        "session_id": key,
+                        "turn_index": turn_index,
                     },
                 )
             )
     return episodes
+
+
+def count_locomo_users(file_path: str | Path) -> int:
+    data = json.loads(Path(file_path).read_text(encoding="utf-8"))
+    return len(data)

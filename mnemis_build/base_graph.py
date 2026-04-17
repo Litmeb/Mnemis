@@ -29,10 +29,16 @@ class BaseGraphBuilder:
         self.llm = llm
         self.config = config
 
-    async def build(self, group_id: str, episodes: list[EpisodeInput]) -> list[str]:
+    async def build(
+        self,
+        group_id: str,
+        episodes: list[EpisodeInput],
+        progress_callback=None,
+    ) -> list[str]:
         await self.store.ensure_indexes()
         created_episode_ids: list[str] = []
-        for episode in episodes:
+        total_episodes = len(episodes)
+        for completed_count, episode in enumerate(episodes, start=1):
             episode_uuid = make_uuid("episode")
             created_episode_ids.append(episode_uuid)
             recent = await self.store.fetch_recent_episodes(group_id, self.config.recent_episode_window)
@@ -41,6 +47,8 @@ class BaseGraphBuilder:
             await self.store.upsert_episode(group_id, episode_uuid, episode, episode_embedding)
             deduped_entities = await self._extract_entities(group_id, episode_uuid, episode, context)
             await self._extract_edges(group_id, context, deduped_entities)
+            if progress_callback is not None:
+                await progress_callback(completed_count, total_episodes, episode)
         return created_episode_ids
 
     def _format_context(self, episode: EpisodeInput, recent: list[dict]) -> str:

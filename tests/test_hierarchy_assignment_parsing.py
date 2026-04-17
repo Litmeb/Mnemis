@@ -1,3 +1,6 @@
+import asyncio
+from types import SimpleNamespace
+
 from mnemis_build.llm import OpenAILLMClient
 from mnemis_build.models import CategoryAssignmentPayload
 
@@ -60,3 +63,88 @@ def test_llm_assignment_parser_accepts_list_or_wrapper_end_to_end() -> None:
     assert wrapped.assignments[0].category == "Research Labs"
     assert listed.assignments[0].category == "Research Labs"
     assert wrapped.assignments[0].indexes == listed.assignments[0].indexes == [0, 1]
+
+
+def test_complete_json_retries_after_truncated_response() -> None:
+    llm = object.__new__(OpenAILLMClient)
+    llm.config = SimpleNamespace(llm_model="test-model", small_llm_model="test-model")
+    llm.recorder = None
+
+    responses = iter(
+        [
+            SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(content='{"assignments":[{"category":"Research Labs"'),
+                        finish_reason="length",
+                    )
+                ]
+            ),
+            SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content='{"assignments":[{"category":"Research Labs","indexes":[0,1]}]}'
+                        ),
+                        finish_reason="stop",
+                    )
+                ]
+            ),
+        ]
+    )
+
+    async def create(**_: object):
+        return next(responses)
+
+    llm.client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(create=create)
+        )
+    )
+
+    payload = asyncio.run(
+        llm.complete_json(
+            CategoryAssignmentPayload,
+            [{"role": "user", "content": "Return JSON."}],
+        )
+    )
+
+    assert payload.assignments[0].category == "Research Labs"
+    assert payload.assignments[0].indexes == [0, 1]
+
+
+def test_complete_json_surfaces_finish_reason_after_retry_exhaustion() -> None:
+    llm = object.__new__(OpenAILLMClient)
+    llm.config = SimpleNamespace(llm_model="test-model", small_llm_model="test-model")
+    llm.recorder = None
+
+    async def create(**_: object):
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(content='{"assignments":[{"category":"Research Labs"'),
+                    finish_reason="length",
+                )
+            ]
+        )
+
+    llm.client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(create=create)
+        )
+    )
+
+    try:
+        asyncio.run(
+            llm.complete_json(
+                CategoryAssignmentPayload,
+                [{"role": "user", "content": "Return JSON."}],
+            )
+        )
+    except ValueError as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("Expected complete_json to raise ValueError")
+
+    assert "finish_reason='length'" in message
+    assert "Response prefix" in message

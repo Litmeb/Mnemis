@@ -65,6 +65,8 @@ $env:MNEMIS_NEO4J_PASSWORD="your-password"
 $env:MNEMIS_OPENAI_API_KEY="your-key"
 $env:MNEMIS_OPENAI_MODEL="gpt-4.1-mini"
 $env:MNEMIS_OPENAI_SMALL_MODEL="gpt-4.1-mini"
+$env:MNEMIS_EMBEDDING_API_KEY="local-noop-key"
+$env:MNEMIS_EMBEDDING_BASE_URL="http://127.0.0.1:8001/v1"
 $env:MNEMIS_EMBEDDING_MODEL="Qwen/Qwen3-Embedding-0.6B"
 $env:EMBEDDING_DIM="128"
 ```
@@ -100,6 +102,14 @@ Rebuild one LoCoMo user into local Neo4j:
 ```powershell
 python .\build_mnemis_graph.py rebuild-locomo --group-id locomo_user_0 --user-index 0
 ```
+
+Rebuild all LoCoMo users with user-level parallelism:
+
+```powershell
+python .\build_mnemis_graph.py rebuild-locomo-all --group-id-prefix locomo_user --max-concurrent-users 4
+```
+
+`rebuild-locomo-all` shows one total progress bar for all users plus one transient worker bar per concurrent user, so you can see both overall completion and which stage each active user is in.
 
 Each `rebuild-locomo` run now emits lightweight instrumentation reports into `results/instrumentation` by default:
 

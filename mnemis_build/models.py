@@ -16,6 +16,8 @@ class EpisodeInput(BaseModel):
     content: str
     valid_at: datetime
     source_id: str
+    session_id: str | None = None
+    turn_index: int | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
