@@ -43,3 +43,20 @@ def test_llm_json_parser_accepts_embedded_array_or_object() -> None:
 
     assert isinstance(wrapped, dict)
     assert isinstance(listed, list)
+
+
+def test_llm_assignment_parser_accepts_list_or_wrapper_end_to_end() -> None:
+    llm = object.__new__(OpenAILLMClient)
+
+    wrapped = llm.parse_json_response(
+        CategoryAssignmentPayload,
+        '```json\n{"assignments":[{"category":"Research Labs","indexes":[0,1]}]}\n```',
+    )
+    listed = llm.parse_json_response(
+        CategoryAssignmentPayload,
+        '```json\n[{"category":"Research Labs","indexes":[0,1]}]\n```',
+    )
+
+    assert wrapped.assignments[0].category == "Research Labs"
+    assert listed.assignments[0].category == "Research Labs"
+    assert wrapped.assignments[0].indexes == listed.assignments[0].indexes == [0, 1]

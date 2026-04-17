@@ -45,6 +45,10 @@ class OpenAILLMClient:
             request["response_format"] = {"type": "json_object"}
         response = await self.client.chat.completions.create(**request)
         content = response.choices[0].message.content or "{}"
+        return self.parse_json_response(model, content)
+
+    def parse_json_response(self, model: type[T], content: str) -> T:
+        # Some prompts allow either a top-level object or a top-level array.
         return model.model_validate(self._parse_json_content(content))
 
     def _parse_json_content(self, content: str) -> Any:

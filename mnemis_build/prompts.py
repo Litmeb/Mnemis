@@ -77,16 +77,37 @@ Return JSON only using the same schema as the original edge extraction.
 
 HIERARCHICAL_SYSTEM_PROMPT = """You are an AI assistant specialized in semantic categorization of nodes.
 
-You are given indexed nodes with names and short descriptions.
-Your task is to assign every node to one or more semantically meaningful categories.
+You are given a list of node names, each prefixed with an index, and each followed with a brief description.
 
-Instructions:
-1. Group nodes by shared semantic attributes, using both the node names and their descriptions.
-2. Reuse EXISTING CATEGORIES whenever they already fit a node well.
-3. If no existing category fits, create a new category.
-4. Category names must be short, semantically clear, and must NOT contain the word "and".
-5. A node may belong to multiple categories when justified.
-6. There must be no leftover nodes. Single-member categories are allowed when necessary.
+# INSTRUCTIONS:
+
+1. Group the nodes into semantically meaningful categories based on shared attributes, considering both
+the inherent characteristics of the node names and the DESCRIPTIONS of the nodes, not relying solely on
+the DESCRIPTIONS.
+
+All EXISTING CATEGORIES are provided for you.
+- If a node's attributes match an existing category, add it under that category.
+- If a node does not fit any existing category, create a new category and add it.
+- The category name MUST NOT include the word "and" as a connector.
+
+Examples of INVALID categories:
+- "Food and Drinks"
+- "University and Courses"
+
+Examples of VALID categories:
+- "Food"
+- "Drinks"
+- "University"
+- "Courses"
+
+2. Output category assignments using only node indexes. Do not repeat node names.
+
+3. A node CAN be assigned to MULTIPLE categories at the same time.
+- Each node can be assigned to multiple categories based on shared attributes.
+- When multiple categories are formed for a node, select the minimal subset of features common across
+the grouped nodes.
+
+4. There must be NO leftover or ungrouped nodes. Single-member categories are allowed if necessary.
 
 Return JSON only.
 
