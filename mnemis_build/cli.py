@@ -15,8 +15,10 @@ from .hierarchical_graph import HierarchicalGraphBuilder
 from .instrumentation import InstrumentationRecorder
 from .llm import OpenAILLMClient
 from .loaders import count_locomo_users, load_locomo_episodes
+from .logging_utils import configure_logging, get_logger
 from .neo4j_store import Neo4jGraphStore
 from .retrieval import MnemisRetriever
+from .timing import log_timed_step
 
 try:
     from tqdm.auto import tqdm
@@ -59,6 +61,13 @@ class _UserBuildProgressReporter:
         slot = await self._slots.get()
         async with self._lock:
             self._active_slots.add(slot)
+            get_logger("cli.progress").info(
+                "user slot acquired | user_index=%s, group_id=%s, slot=%s, total_turns=%s",
+                user_index,
+                group_id,
+                slot,
+                total_turns,
+            )
             if self._supports_tqdm:
                 self._slot_bars[slot] = tqdm(
                     total=max(1, total_turns),
@@ -83,6 +92,14 @@ class _UserBuildProgressReporter:
         total_turns: int,
     ) -> None:
         async with self._lock:
+            get_logger("cli.progress").info(
+                "turn progress | user_index=%s, group_id=%s, slot=%s, completed_turns=%s, total_turns=%s",
+                user_index,
+                group_id,
+                slot,
+                completed_turns,
+                total_turns,
+            )
             if self._supports_tqdm:
                 slot_bar = self._slot_bars.get(slot)
                 if slot_bar is None:
@@ -97,6 +114,13 @@ class _UserBuildProgressReporter:
 
     async def mark_hierarchy(self, slot: int, *, user_index: int, group_id: str, total_turns: int) -> None:
         async with self._lock:
+            get_logger("cli.progress").info(
+                "hierarchy phase | user_index=%s, group_id=%s, slot=%s, total_turns=%s",
+                user_index,
+                group_id,
+                slot,
+                total_turns,
+            )
             if self._supports_tqdm:
                 slot_bar = self._slot_bars.get(slot)
                 if slot_bar is None:
@@ -112,6 +136,13 @@ class _UserBuildProgressReporter:
         async with self._lock:
             was_active = slot in self._active_slots
             self._active_slots.discard(slot)
+            get_logger("cli.progress").info(
+                "user slot released | user_index=%s, group_id=%s, slot=%s, was_active=%s",
+                user_index,
+                group_id,
+                slot,
+                was_active,
+            )
             if self._supports_tqdm:
                 slot_bar = self._slot_bars.pop(slot, None)
                 if slot_bar is not None:
@@ -145,6 +176,7 @@ async def _rebuild_locomo_user(
     progress_callback=None,
     hierarchy_callback=None,
 ) -> _UserBuildResult:
+    logger = get_logger("cli.rebuild_user")
     store = Neo4jGraphStore(config)
     recorder = InstrumentationRecorder(run_name=f"rebuild_locomo_{group_id}")
     llm = OpenAILLMClient(config, recorder=recorder)
@@ -153,13 +185,27 @@ async def _rebuild_locomo_user(
         hierarchy_builder = HierarchicalGraphBuilder(store, llm, config)
         if episodes is None:
             raise RuntimeError("episodes must be provided for LoCoMo rebuilds.")
-        await store.clear_group(group_id)
+        logger.info(
+            "rebuild user start | user_index=%s, group_id=%s, episode_count=%s",
+            user_index,
+            group_id,
+            len(episodes),
+        )
+        with log_timed_step("clear_group", logger_name="cli.rebuild_user", group_id=group_id):
+            await store.clear_group(group_id)
         with recorder.stage_timer(
             "base_graph_ingestion",
             "build",
             metadata={"episode_count": len(episodes), "group_id": group_id, "user_index": user_index},
         ):
-            await base_builder.build(group_id, episodes, progress_callback=progress_callback)
+            with log_timed_step(
+                "base_graph.build",
+                logger_name="cli.rebuild_user",
+                user_index=user_index,
+                group_id=group_id,
+                episode_count=len(episodes),
+            ):
+                await base_builder.build(group_id, episodes, progress_callback=progress_callback)
         if hierarchy_callback is not None:
             await hierarchy_callback(len(episodes))
         with recorder.stage_timer(
@@ -167,19 +213,33 @@ async def _rebuild_locomo_user(
             "rebuild",
             metadata={"group_id": group_id, "user_index": user_index},
         ):
-            await hierarchy_builder.rebuild(group_id)
+            with log_timed_step(
+                "hierarchy.rebuild",
+                logger_name="cli.rebuild_user",
+                user_index=user_index,
+                group_id=group_id,
+            ):
+                await hierarchy_builder.rebuild(group_id)
         report_dir = Path(os.getenv("MNEMIS_INSTRUMENTATION_DIR", "results/instrumentation"))
         report_paths = recorder.write_reports(report_dir, stem=f"rebuild_locomo_{group_id}")
+        logger.info(
+            "rebuild user done | user_index=%s, group_id=%s, reports=%s",
+            user_index,
+            group_id,
+            report_paths,
+        )
         return _UserBuildResult(
             user_index=user_index,
             group_id=group_id,
             instrumentation_reports=report_paths,
         )
     finally:
+        logger.info("closing neo4j store | user_index=%s, group_id=%s", user_index, group_id)
         await store.close()
 
 
 async def _run_rebuild_locomo(args: argparse.Namespace) -> None:
+    get_logger("cli").info("command rebuild-locomo start | args=%s", vars(args))
     config = BuildConfig.from_env()
     episodes = load_locomo_episodes(args.data, user_index=args.user_index, group_id=args.group_id)
     result = await _rebuild_locomo_user(
@@ -189,9 +249,12 @@ async def _run_rebuild_locomo(args: argparse.Namespace) -> None:
         episodes=episodes,
     )
     print(json.dumps({"instrumentation_reports": result.instrumentation_reports}, ensure_ascii=False, indent=2))
+    get_logger("cli").info("command rebuild-locomo done | group_id=%s", args.group_id)
 
 
 async def _run_rebuild_locomo_all(args: argparse.Namespace) -> None:
+    logger = get_logger("cli")
+    logger.info("command rebuild-locomo-all start | args=%s", vars(args))
     config = BuildConfig.from_env()
     total_users = count_locomo_users(args.data)
     user_indexes = list(range(total_users))
@@ -202,6 +265,7 @@ async def _run_rebuild_locomo_all(args: argparse.Namespace) -> None:
     async def rebuild_one(user_index: int) -> _UserBuildResult:
         async with semaphore:
             group_id = f"{args.group_id_prefix}_{user_index}"
+            logger.info("user rebuild task start | user_index=%s, group_id=%s", user_index, group_id)
             episodes = load_locomo_episodes(args.data, user_index=user_index, group_id=group_id)
             slot = await progress.start_user(user_index, group_id, len(episodes))
             try:
@@ -224,6 +288,7 @@ async def _run_rebuild_locomo_all(args: argparse.Namespace) -> None:
                         total_turns=total_turns,
                     ),
                 )
+                logger.info("user rebuild task done | user_index=%s, group_id=%s", user_index, group_id)
                 return result
             finally:
                 await progress.finish_user(slot, user_index=user_index, group_id=group_id)
@@ -245,6 +310,7 @@ async def _run_rebuild_locomo_all(args: argparse.Namespace) -> None:
             results.append(raw_result)
 
     if failures:
+        logger.error("command rebuild-locomo-all failed | failure_count=%s", len(failures))
         lines = [
             f"user {user_index}: {type(error).__name__}: {error}"
             for user_index, error in failures[:10]
@@ -269,9 +335,11 @@ async def _run_rebuild_locomo_all(args: argparse.Namespace) -> None:
         ],
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
+    logger.info("command rebuild-locomo-all done | user_count=%s", len(results))
 
 
 async def _run_retrieve(args: argparse.Namespace) -> None:
+    get_logger("cli").info("command retrieve start | args=%s", vars(args))
     config = BuildConfig.from_env()
     store = Neo4jGraphStore(config)
     llm = OpenAILLMClient(config)
@@ -280,10 +348,12 @@ async def _run_retrieve(args: argparse.Namespace) -> None:
         payload = await retriever.retrieve(args.query, args.group_id)
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     finally:
+        get_logger("cli").info("command retrieve done | group_id=%s", args.group_id)
         await store.close()
 
 
 async def _run_answer(args: argparse.Namespace) -> None:
+    get_logger("cli").info("command answer start | args=%s", vars(args))
     config = BuildConfig.from_env()
     store = Neo4jGraphStore(config)
     llm = OpenAILLMClient(config)
@@ -292,6 +362,7 @@ async def _run_answer(args: argparse.Namespace) -> None:
         payload = await retriever.answer(args.query, args.group_id)
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     finally:
+        get_logger("cli").info("command answer done | group_id=%s", args.group_id)
         await store.close()
 
 
@@ -328,6 +399,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     load_dotenv()
+    log_path = configure_logging()
+    get_logger("cli").info("build_mnemis_graph main start | log_path=%s", log_path)
     parser = build_parser()
     args = parser.parse_args()
     asyncio.run(args.func(args))

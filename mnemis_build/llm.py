@@ -10,6 +10,7 @@ from pydantic import BaseModel, ValidationError
 
 from .config import BuildConfig
 from .instrumentation import InstrumentationRecorder
+from .logging_utils import get_logger
 
 T = TypeVar("T", bound=BaseModel)
 _JSON_RETRY_LIMIT = 3
@@ -36,6 +37,7 @@ class OpenAILLMClient:
         )
         self.config = config
         self.recorder = recorder
+        self.logger = get_logger("llm")
 
     def _extract_usage(self, response: Any) -> dict[str, int]:
         usage = getattr(response, "usage", None)
@@ -91,6 +93,14 @@ class OpenAILLMClient:
         last_finish_reason: str | None = None
 
         for attempt in range(1, _JSON_RETRY_LIMIT + 1):
+            self.logger.info(
+                "chat completion start | stage=%s, operation=%s, model=%s, attempt=%s, message_count=%s",
+                stage,
+                operation,
+                selected_model,
+                attempt,
+                len(current_messages),
+            )
             request: dict[str, Any] = {
                 "model": selected_model,
                 "temperature": temperature,
@@ -101,6 +111,14 @@ class OpenAILLMClient:
             start = perf_counter()
             response = await self.client.chat.completions.create(**request)
             runtime_seconds = perf_counter() - start
+            self.logger.info(
+                "chat completion done | stage=%s, operation=%s, model=%s, attempt=%s, runtime=%.3fs",
+                stage,
+                operation,
+                selected_model,
+                attempt,
+                runtime_seconds,
+            )
             if self.recorder and stage and operation:
                 usage = self._extract_usage(response)
                 self.recorder.record_llm_call(
@@ -125,6 +143,14 @@ class OpenAILLMClient:
                 return self.parse_json_response(model, content)
             except (ValueError, ValidationError) as exc:
                 last_error = exc
+                self.logger.warning(
+                    "chat completion parse failed | stage=%s, operation=%s, model=%s, attempt=%s, error=%s",
+                    stage,
+                    operation,
+                    selected_model,
+                    attempt,
+                    exc,
+                )
                 if attempt >= _JSON_RETRY_LIMIT:
                     break
                 current_messages = self._build_json_retry_messages(messages, content, exc)
@@ -168,12 +194,26 @@ class OpenAILLMClient:
     ) -> str:
         selected_model = model_name or (self.config.small_llm_model if use_small_model else self.config.llm_model)
         start = perf_counter()
+        self.logger.info(
+            "text completion start | stage=%s, operation=%s, model=%s, message_count=%s",
+            stage,
+            operation,
+            selected_model,
+            len(messages),
+        )
         response = await self.client.chat.completions.create(
             model=selected_model,
             temperature=temperature,
             messages=list(messages),
         )
         runtime_seconds = perf_counter() - start
+        self.logger.info(
+            "text completion done | stage=%s, operation=%s, model=%s, runtime=%.3fs",
+            stage,
+            operation,
+            selected_model,
+            runtime_seconds,
+        )
         if self.recorder and stage and operation:
             usage = self._extract_usage(response)
             self.recorder.record_llm_call(
@@ -249,6 +289,12 @@ class OpenAILLMClient:
         for attempt in range(1, _EMBED_RETRY_LIMIT + 1):
             start = perf_counter()
             try:
+                self.logger.info(
+                    "embedding batch start | model=%s, input_count=%s, attempt=%s",
+                    self.config.embedding_model,
+                    len(texts),
+                    attempt,
+                )
                 response = await self.embedding_client.embeddings.create(**self._build_embedding_request(texts))
                 runtime_seconds = perf_counter() - start
                 embeddings = [item.embedding for item in getattr(response, "data", [])]
@@ -272,9 +318,23 @@ class OpenAILLMClient:
                             "attempt": attempt,
                         },
                     )
+                self.logger.info(
+                    "embedding batch done | model=%s, input_count=%s, attempt=%s, runtime=%.3fs",
+                    self.config.embedding_model,
+                    len(texts),
+                    attempt,
+                    runtime_seconds,
+                )
                 return embeddings
             except Exception as exc:
                 last_error = exc
+                self.logger.warning(
+                    "embedding batch failed | model=%s, input_count=%s, attempt=%s, error=%s",
+                    self.config.embedding_model,
+                    len(texts),
+                    attempt,
+                    exc,
+                )
                 if attempt >= _EMBED_RETRY_LIMIT or not self._is_retryable_embedding_error(exc):
                     break
                 await asyncio.sleep(0.5 * attempt)
@@ -290,8 +350,10 @@ class OpenAILLMClient:
         if not texts:
             return []
         items = list(texts)
+        self.logger.info("embedding request start | model=%s, total_inputs=%s", self.config.embedding_model, len(items))
         embeddings: list[list[float]] = []
         for start in range(0, len(items), _EMBED_BATCH_SIZE):
             batch = items[start : start + _EMBED_BATCH_SIZE]
             embeddings.extend(await self._embed_batch(batch))
+        self.logger.info("embedding request done | model=%s, total_inputs=%s", self.config.embedding_model, len(items))
         return embeddings

@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from .config import BuildConfig
 from .llm import OpenAILLMClient
+from .logging_utils import get_logger
 from .models import (
     EdgeExtractionPayload,
     EntityExtractionPayload,
@@ -28,6 +29,7 @@ class BaseGraphBuilder:
         self.store = store
         self.llm = llm
         self.config = config
+        self.logger = get_logger("base_graph")
 
     async def build(
         self,
@@ -35,10 +37,19 @@ class BaseGraphBuilder:
         episodes: list[EpisodeInput],
         progress_callback=None,
     ) -> list[str]:
+        self.logger.info("base graph build start | group_id=%s, total_episodes=%s", group_id, len(episodes))
         await self.store.ensure_indexes()
         created_episode_ids: list[str] = []
         total_episodes = len(episodes)
         for completed_count, episode in enumerate(episodes, start=1):
+            self.logger.info(
+                "turn start | group_id=%s, turn=%s/%s, source_id=%s, speaker=%s",
+                group_id,
+                completed_count,
+                total_episodes,
+                episode.source_id,
+                episode.speaker,
+            )
             episode_uuid = make_uuid("episode")
             created_episode_ids.append(episode_uuid)
             recent = await self.store.fetch_recent_episodes(group_id, self.config.recent_episode_window)
@@ -47,8 +58,17 @@ class BaseGraphBuilder:
             await self.store.upsert_episode(group_id, episode_uuid, episode, episode_embedding)
             deduped_entities = await self._extract_entities(group_id, episode_uuid, episode, context)
             await self._extract_edges(group_id, context, deduped_entities)
+            self.logger.info(
+                "turn done | group_id=%s, turn=%s/%s, source_id=%s, entity_count=%s",
+                group_id,
+                completed_count,
+                total_episodes,
+                episode.source_id,
+                len(deduped_entities),
+            )
             if progress_callback is not None:
                 await progress_callback(completed_count, total_episodes, episode)
+        self.logger.info("base graph build done | group_id=%s, created_episodes=%s", group_id, len(created_episode_ids))
         return created_episode_ids
 
     def _format_context(self, episode: EpisodeInput, recent: list[dict]) -> str:
@@ -116,6 +136,7 @@ class BaseGraphBuilder:
         episode: EpisodeInput,
         context: str,
     ) -> list[EntityRecord]:
+        self.logger.info("entity extraction start | group_id=%s, episode_uuid=%s, source_id=%s", group_id, episode_uuid, episode.source_id)
         extraction = await self.llm.complete_json(
             EntityNameExtraction,
             [
@@ -127,6 +148,7 @@ class BaseGraphBuilder:
             use_small_model=True,
         )
         names = OrderedDict((name.strip(), None) for name in extraction.names if name.strip())
+        self.logger.info("entity names extracted | group_id=%s, episode_uuid=%s, names=%s", group_id, episode_uuid, list(names.keys()))
         forced_speaker_name = self._forced_speaker_name(episode)
         if forced_speaker_name:
             # Paper v2 states that base-graph ingestion forcibly extracts the speaker as an entity.
@@ -179,6 +201,12 @@ class BaseGraphBuilder:
                     source_ids=[episode.source_id],
                     is_speaker=False,
                 )
+        self.logger.info(
+            "entity candidate resolution done | group_id=%s, episode_uuid=%s, unique_entities=%s",
+            group_id,
+            episode_uuid,
+            len(existing_by_name),
+        )
 
         detail_payload = {
             "group_id": group_id,
@@ -230,11 +258,19 @@ class BaseGraphBuilder:
             await self.store.upsert_entity(entity, name_embedding, summary_embedding)
             await self.store.connect_entity_to_episode(entity.uuid, episode_uuid, group_id)
             deduped.append(entity)
+        self.logger.info(
+            "entity extraction done | group_id=%s, episode_uuid=%s, deduped_entities=%s",
+            group_id,
+            episode_uuid,
+            len(deduped),
+        )
         return deduped
 
     async def _extract_edges(self, group_id: str, context: str, entities: list[EntityRecord]) -> None:
         if len(entities) < 2:
+            self.logger.info("edge extraction skipped | group_id=%s, entity_count=%s", group_id, len(entities))
             return
+        self.logger.info("edge extraction start | group_id=%s, entity_count=%s", group_id, len(entities))
         entity_payload = [
             {"name": entity.name, "summary": entity.summary, "tag": entity.tag}
             for entity in entities
@@ -284,6 +320,7 @@ class BaseGraphBuilder:
 
         entities_by_name = await self.store.fetch_entities_by_name(group_id, [entity.name for entity in entities])
         fact_embeddings = await self.llm.embed([edge.fact for edge in edges])
+        upserted_edges = 0
         for edge, fact_embedding in zip(edges, fact_embeddings):
             edge.uuid = self._normalize_generated_uuid(edge.uuid, "fact")
             edge.group_id = group_id
@@ -302,3 +339,5 @@ class BaseGraphBuilder:
             if existing is not None:
                 edge.uuid = existing["uuid"]
             await self.store.upsert_edge(edge, fact_embedding, source["uuid"], target["uuid"])
+            upserted_edges += 1
+        self.logger.info("edge extraction done | group_id=%s, generated_edges=%s, upserted_edges=%s", group_id, len(edges), upserted_edges)

@@ -1,0 +1,1137 @@
+2026-04-17 15:29:14.857 [INFO] mnemis_build - logging configured at results\logs\mnemis_build.log
+2026-04-17 15:29:14.858 [INFO] mnemis_build.cli - build_mnemis_graph main start | log_path=results\logs\mnemis_build.log
+2026-04-17 15:29:14.860 [INFO] mnemis_build.cli - command rebuild-locomo-all start | args={'command': 'rebuild-locomo-all', 'data': WindowsPath('data/locomo.json'), 'group_id_prefix': 'locomo_user', 'max_concurrent_users': 1, 'func': <function _run_rebuild_locomo_all at 0x000001983CC76840>}
+2026-04-17 15:29:14.886 [INFO] mnemis_build.cli - user rebuild task start | user_index=0, group_id=locomo_user_0
+2026-04-17 15:29:14.903 [INFO] mnemis_build.cli.progress - user slot acquired | user_index=0, group_id=locomo_user_0, slot=1, total_turns=419
+2026-04-17 15:29:15.736 [INFO] mnemis_build.cli.rebuild_user - rebuild user start | user_index=0, group_id=locomo_user_0, episode_count=419
+2026-04-17 15:29:15.737 [INFO] mnemis_build.cli.rebuild_user - start clear_group | group_id=locomo_user_0
+2026-04-17 15:29:15.737 [INFO] mnemis_build.neo4j - clear group start | group_id=locomo_user_0
+2026-04-17 15:29:15.806 [INFO] mnemis_build.neo4j - clear group done | group_id=locomo_user_0
+2026-04-17 15:29:15.806 [INFO] mnemis_build.cli.rebuild_user - done clear_group in 0.069s
+2026-04-17 15:29:15.806 [INFO] mnemis_build.cli.rebuild_user - start base_graph.build | user_index=0, group_id=locomo_user_0, episode_count=419
+2026-04-17 15:29:15.807 [INFO] mnemis_build.base_graph - base graph build start | group_id=locomo_user_0, total_episodes=419
+2026-04-17 15:29:15.807 [INFO] mnemis_build.neo4j - ensure indexes start
+2026-04-17 15:29:15.833 [INFO] mnemis_build.neo4j - ensure indexes done | query_count=11
+2026-04-17 15:29:15.833 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=1/419, source_id=locomo_user_0:D1:1, speaker=Caroline
+2026-04-17 15:29:15.835 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:29:15.836 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:29:15.836 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:29:16.878 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=1.042s
+2026-04-17 15:29:16.879 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:29:16.879 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_b420bf31987440a19d0f8e442bf71fd5, source_id=locomo_user_0:D1:1
+2026-04-17 15:29:16.888 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_b420bf31987440a19d0f8e442bf71fd5, source_id=locomo_user_0:D1:1
+2026-04-17 15:29:16.888 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:18.983 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=2.095s
+2026-04-17 15:29:18.984 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_b420bf31987440a19d0f8e442bf71fd5, names=['Caroline', 'Mel']
+2026-04-17 15:29:18.984 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:19.721 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.738s
+2026-04-17 15:29:19.723 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=2
+2026-04-17 15:29:19.723 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=2, attempt=1
+2026-04-17 15:29:19.896 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=2, attempt=1, runtime=0.173s
+2026-04-17 15:29:19.896 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=2
+2026-04-17 15:29:19.896 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:29:19.901 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Mel, limit=5
+2026-04-17 15:29:19.905 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_b420bf31987440a19d0f8e442bf71fd5, unique_entities=2
+2026-04-17 15:29:19.905 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:23.207 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=3.302s
+2026-04-17 15:29:23.207 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=2
+2026-04-17 15:29:23.207 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=2, attempt=1
+2026-04-17 15:29:23.393 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=2, attempt=1, runtime=0.184s
+2026-04-17 15:29:23.393 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=2
+2026-04-17 15:29:23.393 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=2
+2026-04-17 15:29:23.393 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=2, attempt=1
+2026-04-17 15:29:23.505 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=2, attempt=1, runtime=0.111s
+2026-04-17 15:29:23.505 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=2
+2026-04-17 15:29:23.505 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:29:23.534 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_b420bf31987440a19d0f8e442bf71fd5
+2026-04-17 15:29:23.540 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, name=Mel
+2026-04-17 15:29:23.550 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, episode_uuid=episode_b420bf31987440a19d0f8e442bf71fd5
+2026-04-17 15:29:23.561 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_b420bf31987440a19d0f8e442bf71fd5, deduped_entities=2
+2026-04-17 15:29:23.561 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=2
+2026-04-17 15:29:23.561 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:25.960 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=2.398s
+2026-04-17 15:29:25.963 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:30.432 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=4.469s
+2026-04-17 15:29:30.433 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=2
+2026-04-17 15:29:30.438 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:29:30.438 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:29:30.646 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.208s
+2026-04-17 15:29:30.646 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:29:30.646 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:29:30.651 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_b097b28a14c94930b361016bae714a32, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:29:30.661 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:29:30.666 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_b097b28a14c94930b361016bae714a32, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:29:30.680 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:29:30.686 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_eefd78f680ec4cc88d3c8c772620dd44, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:29:30.696 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=3, upserted_edges=3
+2026-04-17 15:29:30.696 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=1/419, source_id=locomo_user_0:D1:1, entity_count=2
+2026-04-17 15:29:30.696 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=1, total_turns=419
+2026-04-17 15:29:30.697 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=2/419, source_id=locomo_user_0:D1:2, speaker=Melanie
+2026-04-17 15:29:30.697 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:29:30.699 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:29:30.699 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:29:30.763 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.064s
+2026-04-17 15:29:30.763 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:29:30.764 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_0ca67ea244a1475098eaa6cc964715d1, source_id=locomo_user_0:D1:2
+2026-04-17 15:29:30.771 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_0ca67ea244a1475098eaa6cc964715d1, source_id=locomo_user_0:D1:2
+2026-04-17 15:29:30.772 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:31.832 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.060s
+2026-04-17 15:29:31.832 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_0ca67ea244a1475098eaa6cc964715d1, names=['Melanie', 'Caroline', 'kids', 'work']
+2026-04-17 15:29:31.832 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:32.678 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.845s
+2026-04-17 15:29:32.678 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:29:32.678 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:29:32.858 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.180s
+2026-04-17 15:29:32.859 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:29:32.859 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:29:32.864 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:29:32.869 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=kids, limit=5
+2026-04-17 15:29:32.874 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=work, limit=5
+2026-04-17 15:29:32.877 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_0ca67ea244a1475098eaa6cc964715d1, unique_entities=4
+2026-04-17 15:29:32.877 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:40.722 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=7.844s
+2026-04-17 15:29:40.723 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:29:40.724 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:29:41.643 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.919s
+2026-04-17 15:29:41.643 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:29:41.643 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:29:41.643 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:29:41.698 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.054s
+2026-04-17 15:29:41.698 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:29:41.698 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:29:41.712 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_0ca67ea244a1475098eaa6cc964715d1
+2026-04-17 15:29:41.717 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:29:41.728 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_0ca67ea244a1475098eaa6cc964715d1
+2026-04-17 15:29:41.734 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_d3aaa75d20e6481caa9ceafdd5dbe9d7, name=kids
+2026-04-17 15:29:41.744 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_d3aaa75d20e6481caa9ceafdd5dbe9d7, episode_uuid=episode_0ca67ea244a1475098eaa6cc964715d1
+2026-04-17 15:29:41.751 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5807733d105e49c887ae6e52330b28f3, name=work
+2026-04-17 15:29:41.759 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5807733d105e49c887ae6e52330b28f3, episode_uuid=episode_0ca67ea244a1475098eaa6cc964715d1
+2026-04-17 15:29:41.767 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_0ca67ea244a1475098eaa6cc964715d1, deduped_entities=4
+2026-04-17 15:29:41.767 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=4
+2026-04-17 15:29:41.767 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:46.713 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=4.946s
+2026-04-17 15:29:46.717 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:49.420 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=2.702s
+2026-04-17 15:29:49.420 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=4
+2026-04-17 15:29:49.425 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:29:49.426 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1
+2026-04-17 15:29:49.628 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1, runtime=0.202s
+2026-04-17 15:29:49.628 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:29:49.629 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:29:49.635 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_108f5b85ff0a4c6b9e577525c79315a3, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:29:49.646 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_d3aaa75d20e6481caa9ceafdd5dbe9d7, limit=5
+2026-04-17 15:29:49.651 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_a088c25ee8d24bb7a68afcf489d05099, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_d3aaa75d20e6481caa9ceafdd5dbe9d7
+2026-04-17 15:29:49.662 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_5807733d105e49c887ae6e52330b28f3, limit=5
+2026-04-17 15:29:49.668 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_9968042536b64908addaaed7ef9bd9bc, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_5807733d105e49c887ae6e52330b28f3
+2026-04-17 15:29:49.677 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489, limit=5
+2026-04-17 15:29:49.682 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_f41d7a989c354d758af1a6487143340f, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489
+2026-04-17 15:29:49.696 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_d3aaa75d20e6481caa9ceafdd5dbe9d7, limit=5
+2026-04-17 15:29:49.704 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_e7207a60c8214669a181e06c95af9b23, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_d3aaa75d20e6481caa9ceafdd5dbe9d7
+2026-04-17 15:29:49.714 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5807733d105e49c887ae6e52330b28f3, limit=5
+2026-04-17 15:29:49.722 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_b540a111d1c84edaa6e87a8d8201013b, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5807733d105e49c887ae6e52330b28f3
+2026-04-17 15:29:49.737 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=6, upserted_edges=6
+2026-04-17 15:29:49.737 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=2/419, source_id=locomo_user_0:D1:2, entity_count=4
+2026-04-17 15:29:49.737 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=2, total_turns=419
+2026-04-17 15:29:49.739 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=3/419, source_id=locomo_user_0:D1:3, speaker=Caroline
+2026-04-17 15:29:49.739 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:29:49.741 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:29:49.741 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:29:49.805 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.064s
+2026-04-17 15:29:49.806 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:29:49.806 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_43400d783bd94bb8bcd6911b41ce0d35, source_id=locomo_user_0:D1:3
+2026-04-17 15:29:49.816 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_43400d783bd94bb8bcd6911b41ce0d35, source_id=locomo_user_0:D1:3
+2026-04-17 15:29:49.816 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:50.950 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.133s
+2026-04-17 15:29:50.951 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_43400d783bd94bb8bcd6911b41ce0d35, names=['LGBTQ support group', 'Caroline', 'Mel']
+2026-04-17 15:29:50.951 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:51.869 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.918s
+2026-04-17 15:29:51.870 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:29:51.870 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:29:51.918 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.048s
+2026-04-17 15:29:51.919 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:29:51.919 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:29:51.925 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:29:51.930 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Mel, limit=5
+2026-04-17 15:29:51.932 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_43400d783bd94bb8bcd6911b41ce0d35, unique_entities=3
+2026-04-17 15:29:51.932 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:29:57.484 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=5.549s
+2026-04-17 15:29:57.485 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:29:57.485 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:29:57.683 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.197s
+2026-04-17 15:29:57.683 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:29:57.683 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:29:57.683 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:29:57.758 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.075s
+2026-04-17 15:29:57.758 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:29:57.758 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:29:57.773 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_43400d783bd94bb8bcd6911b41ce0d35
+2026-04-17 15:29:57.778 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:29:57.789 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_43400d783bd94bb8bcd6911b41ce0d35
+2026-04-17 15:29:57.795 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, name=Mel
+2026-04-17 15:29:57.804 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, episode_uuid=episode_43400d783bd94bb8bcd6911b41ce0d35
+2026-04-17 15:29:57.808 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_43400d783bd94bb8bcd6911b41ce0d35, deduped_entities=3
+2026-04-17 15:29:57.808 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=3
+2026-04-17 15:29:57.808 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:03.282 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=5.474s
+2026-04-17 15:30:03.283 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:05.223 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=1.940s
+2026-04-17 15:30:05.224 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=3
+2026-04-17 15:30:05.226 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:30:05.227 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:30:06.152 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.925s
+2026-04-17 15:30:06.152 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:30:06.153 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:30:06.158 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:30:06.168 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:30:06.173 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:30:06.184 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:30:06.189 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_79c81cf1959e4ec7940272038388e7eb, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:30:06.199 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:30:06.203 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_035f5139f9da40d3b721db60b3f9066c, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:30:06.210 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:30:06.216 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_322195f906834088a3f78a33d7feccdf, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:30:06.228 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=5, upserted_edges=5
+2026-04-17 15:30:06.228 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=3/419, source_id=locomo_user_0:D1:3, entity_count=3
+2026-04-17 15:30:06.228 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=3, total_turns=419
+2026-04-17 15:30:06.229 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=4/419, source_id=locomo_user_0:D1:4, speaker=Melanie
+2026-04-17 15:30:06.229 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:30:06.232 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:30:06.232 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:30:06.338 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.106s
+2026-04-17 15:30:06.338 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:30:06.338 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_b28b23e161334d37b61cf7fe55205635, source_id=locomo_user_0:D1:4
+2026-04-17 15:30:06.348 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_b28b23e161334d37b61cf7fe55205635, source_id=locomo_user_0:D1:4
+2026-04-17 15:30:06.348 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:07.425 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.077s
+2026-04-17 15:30:07.426 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_b28b23e161334d37b61cf7fe55205635, names=['Melanie', 'Caroline', 'LGBTQ support group']
+2026-04-17 15:30:07.426 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:08.258 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.832s
+2026-04-17 15:30:08.258 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:30:08.259 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:30:08.306 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.047s
+2026-04-17 15:30:08.306 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:30:08.307 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:30:08.312 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:30:08.317 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:30:08.322 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_b28b23e161334d37b61cf7fe55205635, unique_entities=3
+2026-04-17 15:30:08.322 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:18.141 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=9.820s
+2026-04-17 15:30:18.142 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:30:18.142 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:30:18.319 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.176s
+2026-04-17 15:30:18.320 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:30:18.320 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:30:18.320 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:30:18.385 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.065s
+2026-04-17 15:30:18.385 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:30:18.385 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:30:18.397 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_b28b23e161334d37b61cf7fe55205635
+2026-04-17 15:30:18.402 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:30:18.414 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_b28b23e161334d37b61cf7fe55205635
+2026-04-17 15:30:18.420 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:30:18.429 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_b28b23e161334d37b61cf7fe55205635
+2026-04-17 15:30:18.436 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_b28b23e161334d37b61cf7fe55205635, deduped_entities=3
+2026-04-17 15:30:18.436 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=3
+2026-04-17 15:30:18.436 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:22.618 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=4.181s
+2026-04-17 15:30:22.619 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:35.363 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=12.744s
+2026-04-17 15:30:35.363 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=3
+2026-04-17 15:30:35.367 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:30:35.367 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:30:35.460 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.093s
+2026-04-17 15:30:35.460 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:30:35.460 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:30:35.466 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_108f5b85ff0a4c6b9e577525c79315a3, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:30:35.475 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489, limit=5
+2026-04-17 15:30:35.481 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_f41d7a989c354d758af1a6487143340f, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489
+2026-04-17 15:30:35.493 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:30:35.497 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_b2f35021aa4e406c9ae279732e9d2100, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:30:35.508 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:30:35.513 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:30:35.520 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=4, upserted_edges=4
+2026-04-17 15:30:35.520 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=4/419, source_id=locomo_user_0:D1:4, entity_count=3
+2026-04-17 15:30:35.520 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=4, total_turns=419
+2026-04-17 15:30:35.521 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=5/419, source_id=locomo_user_0:D1:5, speaker=Caroline
+2026-04-17 15:30:35.521 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:30:35.523 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:30:35.523 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:30:35.569 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.045s
+2026-04-17 15:30:35.569 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:30:35.569 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_8432dbf4b3334d0ba12cdec9e370b869, source_id=locomo_user_0:D1:5
+2026-04-17 15:30:35.583 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_8432dbf4b3334d0ba12cdec9e370b869, source_id=locomo_user_0:D1:5
+2026-04-17 15:30:35.583 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:36.830 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.247s
+2026-04-17 15:30:36.830 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_8432dbf4b3334d0ba12cdec9e370b869, names=['Caroline', 'Mel', 'LGBTQ support group', 'transgender stories']
+2026-04-17 15:30:36.833 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:37.866 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=1.033s
+2026-04-17 15:30:37.868 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:30:37.869 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:30:38.273 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.403s
+2026-04-17 15:30:38.275 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:30:38.277 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:30:38.293 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Mel, limit=5
+2026-04-17 15:30:38.311 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:30:38.328 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:30:38.342 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_8432dbf4b3334d0ba12cdec9e370b869, unique_entities=4
+2026-04-17 15:30:38.343 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:52.487 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=14.143s
+2026-04-17 15:30:52.489 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:30:52.490 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:30:52.906 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.416s
+2026-04-17 15:30:52.907 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:30:52.907 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:30:52.908 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:30:53.219 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.311s
+2026-04-17 15:30:53.224 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:30:53.225 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:30:53.250 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_8432dbf4b3334d0ba12cdec9e370b869
+2026-04-17 15:30:53.264 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, name=Mel
+2026-04-17 15:30:53.285 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, episode_uuid=episode_8432dbf4b3334d0ba12cdec9e370b869
+2026-04-17 15:30:53.302 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:30:53.327 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_8432dbf4b3334d0ba12cdec9e370b869
+2026-04-17 15:30:53.344 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:30:53.368 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_8432dbf4b3334d0ba12cdec9e370b869
+2026-04-17 15:30:53.378 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_8432dbf4b3334d0ba12cdec9e370b869, deduped_entities=4
+2026-04-17 15:30:53.381 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=4
+2026-04-17 15:30:53.381 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:30:57.396 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=4.014s
+2026-04-17 15:30:57.396 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:01.057 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=3.658s
+2026-04-17 15:31:01.059 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=4
+2026-04-17 15:31:01.066 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:31:01.068 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:31:01.509 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.441s
+2026-04-17 15:31:01.512 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:31:01.513 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:31:01.536 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_1df646892c9e45f7a806d9469f70b354, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:31:01.562 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:31:01.577 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_c51af7000bb54caaad4fdb51fcad561f, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:31:01.595 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:31:01.613 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_0a26fcbdb6f6486bb9e20a460703fea2, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:31:01.683 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:31:01.698 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_056b515cc85b4ecb8767b85908ec959a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:31:01.718 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:31:01.738 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_712b2e8f84854280860c79893288390e, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:31:01.756 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=5, upserted_edges=5
+2026-04-17 15:31:01.757 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=5/419, source_id=locomo_user_0:D1:5, entity_count=4
+2026-04-17 15:31:01.758 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=5, total_turns=419
+2026-04-17 15:31:01.766 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=6/419, source_id=locomo_user_0:D1:6, speaker=Melanie
+2026-04-17 15:31:01.767 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:31:01.780 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:31:01.781 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:31:02.171 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.390s
+2026-04-17 15:31:02.177 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:31:02.178 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17, source_id=locomo_user_0:D1:6
+2026-04-17 15:31:02.200 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17, source_id=locomo_user_0:D1:6
+2026-04-17 15:31:02.203 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:03.462 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.258s
+2026-04-17 15:31:03.463 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17, names=['Melanie', 'Caroline', 'LGBTQ support group', 'transgender stories', 'painting']
+2026-04-17 15:31:03.464 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:04.338 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.872s
+2026-04-17 15:31:04.344 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:31:04.350 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:31:04.731 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.381s
+2026-04-17 15:31:04.733 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:31:04.733 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:31:04.757 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:31:04.773 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:31:04.790 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:31:04.805 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=painting, limit=5
+2026-04-17 15:31:04.819 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17, unique_entities=5
+2026-04-17 15:31:04.821 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:23.340 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=18.518s
+2026-04-17 15:31:23.341 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:31:23.342 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:31:23.692 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.350s
+2026-04-17 15:31:23.694 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:31:23.694 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:31:23.695 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:31:24.031 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.338s
+2026-04-17 15:31:24.031 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:31:24.035 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:31:24.057 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17
+2026-04-17 15:31:24.071 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:31:24.089 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17
+2026-04-17 15:31:24.097 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:31:24.113 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17
+2026-04-17 15:31:24.120 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:31:24.139 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17
+2026-04-17 15:31:24.148 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, name=painting
+2026-04-17 15:31:24.176 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17
+2026-04-17 15:31:24.189 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_5e3fe82f23984a7aaf2c6e641ca05c17, deduped_entities=5
+2026-04-17 15:31:24.190 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=5
+2026-04-17 15:31:24.191 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:29.293 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=5.101s
+2026-04-17 15:31:29.294 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:31.434 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=2.139s
+2026-04-17 15:31:31.436 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=5
+2026-04-17 15:31:31.446 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:31:31.446 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1
+2026-04-17 15:31:31.821 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1, runtime=0.375s
+2026-04-17 15:31:31.822 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:31:31.823 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, limit=5
+2026-04-17 15:31:31.838 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_e069b61126674014a4e1c999f747290a, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4
+2026-04-17 15:31:31.866 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:31:31.883 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:31:31.900 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:31:31.919 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:31:31.946 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:31:31.966 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_0c1e4153083f43cbb616b3c20a14560f, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:31:31.986 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489, limit=5
+2026-04-17 15:31:32.004 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_148487e353b5455ca6a8b2cd39894a92, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489
+2026-04-17 15:31:32.027 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:31:32.044 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_91439b072674441bbb78fc4feaba61b9, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:31:32.062 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=6, upserted_edges=6
+2026-04-17 15:31:32.063 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=6/419, source_id=locomo_user_0:D1:6, entity_count=5
+2026-04-17 15:31:32.064 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=6, total_turns=419
+2026-04-17 15:31:32.070 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=7/419, source_id=locomo_user_0:D1:7, speaker=Caroline
+2026-04-17 15:31:32.071 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:31:32.084 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:31:32.084 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:31:32.509 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.425s
+2026-04-17 15:31:32.513 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:31:32.514 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_69d60cac777547319bb5bf93b7fa057d, source_id=locomo_user_0:D1:7
+2026-04-17 15:31:32.541 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_69d60cac777547319bb5bf93b7fa057d, source_id=locomo_user_0:D1:7
+2026-04-17 15:31:32.542 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:33.740 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.197s
+2026-04-17 15:31:33.741 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_69d60cac777547319bb5bf93b7fa057d, names=['Caroline', 'LGBTQ support group', 'transgender stories']
+2026-04-17 15:31:33.741 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:34.545 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.799s
+2026-04-17 15:31:34.555 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:31:34.555 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:31:34.979 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.424s
+2026-04-17 15:31:34.983 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:31:34.985 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:31:35.004 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:31:35.022 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:31:35.041 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Mel, limit=5
+2026-04-17 15:31:35.055 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_69d60cac777547319bb5bf93b7fa057d, unique_entities=4
+2026-04-17 15:31:35.056 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:52.328 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=17.270s
+2026-04-17 15:31:52.331 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:31:52.332 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:31:52.828 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.496s
+2026-04-17 15:31:52.830 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:31:52.832 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:31:52.833 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:31:53.248 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.415s
+2026-04-17 15:31:53.249 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:31:53.249 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:31:53.273 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_69d60cac777547319bb5bf93b7fa057d
+2026-04-17 15:31:53.281 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:31:53.302 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_69d60cac777547319bb5bf93b7fa057d
+2026-04-17 15:31:53.311 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:31:53.333 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_69d60cac777547319bb5bf93b7fa057d
+2026-04-17 15:31:53.344 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, name=Mel
+2026-04-17 15:31:53.361 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, episode_uuid=episode_69d60cac777547319bb5bf93b7fa057d
+2026-04-17 15:31:53.373 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_69d60cac777547319bb5bf93b7fa057d, deduped_entities=4
+2026-04-17 15:31:53.373 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=4
+2026-04-17 15:31:53.374 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:31:57.852 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=4.477s
+2026-04-17 15:31:57.853 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:00.898 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=3.044s
+2026-04-17 15:32:00.899 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=4
+2026-04-17 15:32:00.910 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=7
+2026-04-17 15:32:00.912 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=7, attempt=1
+2026-04-17 15:32:01.276 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=7, attempt=1, runtime=0.363s
+2026-04-17 15:32:01.277 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=7
+2026-04-17 15:32:01.278 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:32:01.297 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:32:01.309 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:32:01.325 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_057ea3a4dbe64e09b8829a5d0850a9c3, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:32:01.344 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:32:01.358 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_0c1e4153083f43cbb616b3c20a14560f, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:32:01.373 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:32:01.387 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_79c81cf1959e4ec7940272038388e7eb, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:32:01.402 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:32:01.419 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_056b515cc85b4ecb8767b85908ec959a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:32:01.438 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:32:01.456 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_322195f906834088a3f78a33d7feccdf, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:32:01.476 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:32:01.491 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:32:01.510 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=7, upserted_edges=7
+2026-04-17 15:32:01.510 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=7/419, source_id=locomo_user_0:D1:7, entity_count=4
+2026-04-17 15:32:01.511 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=7, total_turns=419
+2026-04-17 15:32:01.516 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=8/419, source_id=locomo_user_0:D1:8, speaker=Melanie
+2026-04-17 15:32:01.520 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:32:01.532 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:32:01.533 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:32:01.889 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.359s
+2026-04-17 15:32:01.892 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:32:01.893 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_18a09982bb9247669367b1284e02ab58, source_id=locomo_user_0:D1:8
+2026-04-17 15:32:01.912 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_18a09982bb9247669367b1284e02ab58, source_id=locomo_user_0:D1:8
+2026-04-17 15:32:01.913 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:02.994 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.081s
+2026-04-17 15:32:02.997 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_18a09982bb9247669367b1284e02ab58, names=['Melanie', 'Caroline', 'LGBTQ support group', 'transgender stories']
+2026-04-17 15:32:02.997 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:04.688 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=1.690s
+2026-04-17 15:32:04.689 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:04.689 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:32:05.892 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=1.203s
+2026-04-17 15:32:05.893 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:05.894 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:32:05.917 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:32:05.934 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:32:05.950 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:32:05.966 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_18a09982bb9247669367b1284e02ab58, unique_entities=4
+2026-04-17 15:32:05.967 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:24.689 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=18.721s
+2026-04-17 15:32:24.690 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:24.690 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:32:25.067 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.376s
+2026-04-17 15:32:25.068 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:25.069 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:25.071 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:32:25.453 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.383s
+2026-04-17 15:32:25.457 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:25.458 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:32:25.498 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_18a09982bb9247669367b1284e02ab58
+2026-04-17 15:32:25.511 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:32:25.532 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_18a09982bb9247669367b1284e02ab58
+2026-04-17 15:32:25.541 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:32:25.559 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_18a09982bb9247669367b1284e02ab58
+2026-04-17 15:32:25.568 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:32:25.584 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_18a09982bb9247669367b1284e02ab58
+2026-04-17 15:32:25.592 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_18a09982bb9247669367b1284e02ab58, deduped_entities=4
+2026-04-17 15:32:25.594 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=4
+2026-04-17 15:32:25.595 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:31.256 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=5.662s
+2026-04-17 15:32:31.262 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:33.769 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=2.502s
+2026-04-17 15:32:33.769 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=4
+2026-04-17 15:32:33.777 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:33.777 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:32:34.112 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.334s
+2026-04-17 15:32:34.114 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:34.115 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:32:34.133 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_108f5b85ff0a4c6b9e577525c79315a3, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:32:34.152 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:32:34.169 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:32:34.183 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:32:34.205 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:32:34.225 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:32:34.250 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_81dc7a48fa804448b5277253fdaab6a7, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:32:34.269 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=4, upserted_edges=4
+2026-04-17 15:32:34.269 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=8/419, source_id=locomo_user_0:D1:8, entity_count=4
+2026-04-17 15:32:34.271 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=8, total_turns=419
+2026-04-17 15:32:34.277 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=9/419, source_id=locomo_user_0:D1:9, speaker=Caroline
+2026-04-17 15:32:34.277 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:32:34.287 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:32:34.288 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:32:34.628 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.340s
+2026-04-17 15:32:34.635 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:32:34.636 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_fc803871431341f983a4dd0dd9f6c888, source_id=locomo_user_0:D1:9
+2026-04-17 15:32:34.650 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_fc803871431341f983a4dd0dd9f6c888, source_id=locomo_user_0:D1:9
+2026-04-17 15:32:34.652 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:35.719 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.065s
+2026-04-17 15:32:35.721 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_fc803871431341f983a4dd0dd9f6c888, names=['Caroline', 'LGBTQ support group', 'Mel']
+2026-04-17 15:32:35.721 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:36.738 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=1.017s
+2026-04-17 15:32:36.739 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:32:36.739 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:32:37.021 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.282s
+2026-04-17 15:32:37.022 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:32:37.023 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:32:37.043 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:32:37.062 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Mel, limit=5
+2026-04-17 15:32:37.079 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_fc803871431341f983a4dd0dd9f6c888, unique_entities=3
+2026-04-17 15:32:37.080 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:50.953 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=13.872s
+2026-04-17 15:32:50.959 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:32:50.960 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:32:51.332 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.371s
+2026-04-17 15:32:51.334 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:32:51.335 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:32:51.335 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1
+2026-04-17 15:32:51.739 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=3, attempt=1, runtime=0.403s
+2026-04-17 15:32:51.741 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=3
+2026-04-17 15:32:51.742 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:32:51.770 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_fc803871431341f983a4dd0dd9f6c888
+2026-04-17 15:32:51.790 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:32:51.812 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_fc803871431341f983a4dd0dd9f6c888
+2026-04-17 15:32:51.823 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, name=Mel
+2026-04-17 15:32:51.844 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, episode_uuid=episode_fc803871431341f983a4dd0dd9f6c888
+2026-04-17 15:32:51.856 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_fc803871431341f983a4dd0dd9f6c888, deduped_entities=3
+2026-04-17 15:32:51.857 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=3
+2026-04-17 15:32:51.858 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:55.028 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=3.169s
+2026-04-17 15:32:55.028 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:32:58.315 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=3.285s
+2026-04-17 15:32:58.315 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=3
+2026-04-17 15:32:58.323 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:58.324 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:32:58.751 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.428s
+2026-04-17 15:32:58.752 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:32:58.753 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:32:58.768 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:32:58.786 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:32:58.799 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_c57121c773e24352ab29672384b8fd17, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:32:58.815 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:32:58.829 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_b097b28a14c94930b361016bae714a32, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:32:58.844 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:32:58.859 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_511dc8b025194ef99b29d87eaf6a1cf8, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:32:58.877 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=4, upserted_edges=4
+2026-04-17 15:32:58.878 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=9/419, source_id=locomo_user_0:D1:9, entity_count=3
+2026-04-17 15:32:58.879 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=9, total_turns=419
+2026-04-17 15:32:58.884 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=10/419, source_id=locomo_user_0:D1:10, speaker=Melanie
+2026-04-17 15:32:58.885 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:32:58.894 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:32:58.894 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:32:59.240 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.345s
+2026-04-17 15:32:59.240 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:32:59.241 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_c3967c6183564ecead715d02fb3013de, source_id=locomo_user_0:D1:10
+2026-04-17 15:32:59.256 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_c3967c6183564ecead715d02fb3013de, source_id=locomo_user_0:D1:10
+2026-04-17 15:32:59.257 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:00.316 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.059s
+2026-04-17 15:33:00.316 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_c3967c6183564ecead715d02fb3013de, names=['Caroline', 'Melanie', 'LGBTQ support group', 'transgender stories']
+2026-04-17 15:33:00.316 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:01.092 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.775s
+2026-04-17 15:33:01.092 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:01.092 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:33:01.141 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.049s
+2026-04-17 15:33:01.141 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:01.141 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:33:01.148 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:33:01.153 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:33:01.158 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:33:01.163 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_c3967c6183564ecead715d02fb3013de, unique_entities=4
+2026-04-17 15:33:01.163 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:20.525 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=19.362s
+2026-04-17 15:33:20.526 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:20.526 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:33:20.724 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.197s
+2026-04-17 15:33:20.724 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:20.724 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:20.724 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:33:20.839 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.115s
+2026-04-17 15:33:20.840 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:20.840 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:33:20.855 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_c3967c6183564ecead715d02fb3013de
+2026-04-17 15:33:20.860 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:33:20.870 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_c3967c6183564ecead715d02fb3013de
+2026-04-17 15:33:20.877 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:33:20.887 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_c3967c6183564ecead715d02fb3013de
+2026-04-17 15:33:20.892 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:33:20.903 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_c3967c6183564ecead715d02fb3013de
+2026-04-17 15:33:20.907 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_c3967c6183564ecead715d02fb3013de, deduped_entities=4
+2026-04-17 15:33:20.907 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=4
+2026-04-17 15:33:20.907 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:26.325 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=5.417s
+2026-04-17 15:33:26.325 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:29.563 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=3.238s
+2026-04-17 15:33:29.564 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=4
+2026-04-17 15:33:29.570 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:33:29.571 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1
+2026-04-17 15:33:29.731 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1, runtime=0.161s
+2026-04-17 15:33:29.732 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:33:29.732 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489, limit=5
+2026-04-17 15:33:29.739 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_f41d7a989c354d758af1a6487143340f, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489
+2026-04-17 15:33:29.751 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:33:29.756 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_108f5b85ff0a4c6b9e577525c79315a3, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:33:29.763 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:33:29.768 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_b2f35021aa4e406c9ae279732e9d2100, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:33:29.777 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:33:29.781 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:33:29.791 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:33:29.796 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:33:29.808 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:33:29.813 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_c55d6c5cd2a64b8f8fc50028390deae1, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:33:29.819 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=6, upserted_edges=6
+2026-04-17 15:33:29.819 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=10/419, source_id=locomo_user_0:D1:10, entity_count=4
+2026-04-17 15:33:29.819 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=10, total_turns=419
+2026-04-17 15:33:29.820 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=11/419, source_id=locomo_user_0:D1:11, speaker=Caroline
+2026-04-17 15:33:29.820 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:33:29.823 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:33:29.823 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:33:30.646 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.822s
+2026-04-17 15:33:30.646 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:33:30.646 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_c2ae6f5ee9a846f78c5cdfcc115781dd, source_id=locomo_user_0:D1:11
+2026-04-17 15:33:30.658 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_c2ae6f5ee9a846f78c5cdfcc115781dd, source_id=locomo_user_0:D1:11
+2026-04-17 15:33:30.659 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:31.708 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.050s
+2026-04-17 15:33:31.709 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_c2ae6f5ee9a846f78c5cdfcc115781dd, names=['Caroline', 'LGBTQ support group', 'Mel']
+2026-04-17 15:33:31.709 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:32.649 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.939s
+2026-04-17 15:33:32.649 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:32.649 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:33:32.711 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.062s
+2026-04-17 15:33:32.711 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:32.712 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:33:32.719 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:33:32.725 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Mel, limit=5
+2026-04-17 15:33:32.729 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:33:32.733 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_c2ae6f5ee9a846f78c5cdfcc115781dd, unique_entities=4
+2026-04-17 15:33:32.733 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:47.870 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=15.136s
+2026-04-17 15:33:47.870 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:47.870 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:33:48.056 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.186s
+2026-04-17 15:33:48.056 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:48.056 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:48.056 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:33:48.134 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.077s
+2026-04-17 15:33:48.134 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:48.134 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:33:48.148 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_c2ae6f5ee9a846f78c5cdfcc115781dd
+2026-04-17 15:33:48.153 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:33:48.163 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_c2ae6f5ee9a846f78c5cdfcc115781dd
+2026-04-17 15:33:48.170 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, name=Mel
+2026-04-17 15:33:48.180 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, episode_uuid=episode_c2ae6f5ee9a846f78c5cdfcc115781dd
+2026-04-17 15:33:48.184 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:33:48.194 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_c2ae6f5ee9a846f78c5cdfcc115781dd
+2026-04-17 15:33:48.199 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_c2ae6f5ee9a846f78c5cdfcc115781dd, deduped_entities=4
+2026-04-17 15:33:48.199 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=4
+2026-04-17 15:33:48.200 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:53.408 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=5.209s
+2026-04-17 15:33:53.409 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:55.793 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=2.384s
+2026-04-17 15:33:55.795 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=4
+2026-04-17 15:33:55.799 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:55.799 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:33:55.987 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.188s
+2026-04-17 15:33:55.987 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:55.988 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:33:55.994 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:33:56.006 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:33:56.013 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:33:56.019 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:33:56.025 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4d14127a95b243ac9949f45e117f35bc, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:33:56.036 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:33:56.041 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_eaf5da4edff14222b12d0e959207825c, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:33:56.048 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=4, upserted_edges=4
+2026-04-17 15:33:56.048 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=11/419, source_id=locomo_user_0:D1:11, entity_count=4
+2026-04-17 15:33:56.048 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=11, total_turns=419
+2026-04-17 15:33:56.049 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=12/419, source_id=locomo_user_0:D1:12, speaker=Melanie
+2026-04-17 15:33:56.049 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:33:56.052 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:33:56.052 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:33:56.128 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.076s
+2026-04-17 15:33:56.128 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:33:56.128 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_a1d1abcf5c1647c5a365deb1be87cd25, source_id=locomo_user_0:D1:12
+2026-04-17 15:33:56.141 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_a1d1abcf5c1647c5a365deb1be87cd25, source_id=locomo_user_0:D1:12
+2026-04-17 15:33:56.142 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:57.549 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.406s
+2026-04-17 15:33:57.549 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_a1d1abcf5c1647c5a365deb1be87cd25, names=['Melanie', 'Caroline', 'LGBTQ support group', 'transgender stories']
+2026-04-17 15:33:57.549 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:33:58.517 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.967s
+2026-04-17 15:33:58.517 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:58.517 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:33:58.570 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.052s
+2026-04-17 15:33:58.570 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:33:58.570 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:33:58.577 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:33:58.582 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:33:58.588 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:33:58.593 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_a1d1abcf5c1647c5a365deb1be87cd25, unique_entities=4
+2026-04-17 15:33:58.593 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:34:22.857 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=24.264s
+2026-04-17 15:34:22.858 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:34:22.858 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:34:23.042 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.183s
+2026-04-17 15:34:23.042 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:34:23.042 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:34:23.042 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:34:23.132 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.090s
+2026-04-17 15:34:23.132 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:34:23.132 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:34:23.145 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_a1d1abcf5c1647c5a365deb1be87cd25
+2026-04-17 15:34:23.151 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:34:23.163 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_a1d1abcf5c1647c5a365deb1be87cd25
+2026-04-17 15:34:23.168 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:34:23.179 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_a1d1abcf5c1647c5a365deb1be87cd25
+2026-04-17 15:34:23.185 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:34:23.197 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_a1d1abcf5c1647c5a365deb1be87cd25
+2026-04-17 15:34:23.204 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_a1d1abcf5c1647c5a365deb1be87cd25, deduped_entities=4
+2026-04-17 15:34:23.205 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=4
+2026-04-17 15:34:23.205 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:34:27.219 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=4.015s
+2026-04-17 15:34:27.220 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:34:37.355 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=10.133s
+2026-04-17 15:34:37.355 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=4
+2026-04-17 15:34:37.360 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:34:37.361 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1
+2026-04-17 15:34:37.525 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1, runtime=0.164s
+2026-04-17 15:34:37.525 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:34:37.525 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:34:37.532 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_1f3c75a9cebd45e69039fa75da0c88d7, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:34:37.543 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:34:37.549 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:34:37.556 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:34:37.562 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:34:37.571 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:34:37.576 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_fb379899102d4ccd95e2d2b5ec63ef34, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:34:37.582 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:34:37.590 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_870dfaa24bf04efda2ee83f549325e31, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:34:37.599 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489, limit=5
+2026-04-17 15:34:37.603 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_9ab939327fbe499ea92a68c2d5b822a6, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489
+2026-04-17 15:34:37.610 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=6, upserted_edges=6
+2026-04-17 15:34:37.610 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=12/419, source_id=locomo_user_0:D1:12, entity_count=4
+2026-04-17 15:34:37.610 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=12, total_turns=419
+2026-04-17 15:34:37.611 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=13/419, source_id=locomo_user_0:D1:13, speaker=Caroline
+2026-04-17 15:34:37.611 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:34:37.614 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:34:37.614 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:34:37.682 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.068s
+2026-04-17 15:34:37.683 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:34:37.683 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd, source_id=locomo_user_0:D1:13
+2026-04-17 15:34:37.695 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd, source_id=locomo_user_0:D1:13
+2026-04-17 15:34:37.696 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:34:39.506 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.811s
+2026-04-17 15:34:39.507 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd, names=['Caroline', 'Melanie', 'LGBTQ support group', 'transgender stories', 'painting']
+2026-04-17 15:34:39.508 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:34:40.756 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=1.248s
+2026-04-17 15:34:40.757 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:34:40.757 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:34:41.673 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.916s
+2026-04-17 15:34:41.673 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:34:41.674 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:34:41.679 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:34:41.684 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:34:41.691 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:34:41.695 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=painting, limit=5
+2026-04-17 15:34:41.699 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd, unique_entities=5
+2026-04-17 15:34:41.699 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:04.208 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=22.507s
+2026-04-17 15:35:04.209 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:04.209 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:35:04.497 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.288s
+2026-04-17 15:35:04.497 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:04.497 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:04.497 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:35:04.549 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.051s
+2026-04-17 15:35:04.549 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:04.549 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:35:04.562 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd
+2026-04-17 15:35:04.570 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:35:04.582 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd
+2026-04-17 15:35:04.589 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:35:04.599 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd
+2026-04-17 15:35:04.605 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:35:04.615 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd
+2026-04-17 15:35:04.621 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, name=painting
+2026-04-17 15:35:04.632 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd
+2026-04-17 15:35:04.637 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_54d20c430c84430e857d53a64b8d1dbd, deduped_entities=5
+2026-04-17 15:35:04.638 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=5
+2026-04-17 15:35:04.638 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:08.451 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=3.812s
+2026-04-17 15:35:08.451 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:11.136 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=2.685s
+2026-04-17 15:35:11.136 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=5
+2026-04-17 15:35:11.140 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:35:11.140 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1
+2026-04-17 15:35:11.295 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1, runtime=0.154s
+2026-04-17 15:35:11.296 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:35:11.296 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489, limit=5
+2026-04-17 15:35:11.303 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_1309b8d51d964f8c9f453f1b2dd95e57, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489
+2026-04-17 15:35:11.314 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:35:11.321 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_91439b072674441bbb78fc4feaba61b9, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:35:11.328 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:35:11.334 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:35:11.343 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, limit=5
+2026-04-17 15:35:11.350 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_7a25b765efd04ef0b72f34153f2e2f7e, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4
+2026-04-17 15:35:11.361 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:35:11.367 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_c55d6c5cd2a64b8f8fc50028390deae1, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:35:11.374 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:35:11.380 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_c51af7000bb54caaad4fdb51fcad561f, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:35:11.391 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=6, upserted_edges=6
+2026-04-17 15:35:11.392 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=13/419, source_id=locomo_user_0:D1:13, entity_count=5
+2026-04-17 15:35:11.392 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=13, total_turns=419
+2026-04-17 15:35:11.392 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=14/419, source_id=locomo_user_0:D1:14, speaker=Melanie
+2026-04-17 15:35:11.393 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:35:11.395 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:35:11.395 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:35:11.445 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.050s
+2026-04-17 15:35:11.445 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:35:11.445 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec, source_id=locomo_user_0:D1:14
+2026-04-17 15:35:11.487 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec, source_id=locomo_user_0:D1:14
+2026-04-17 15:35:11.487 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:12.614 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.126s
+2026-04-17 15:35:12.614 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec, names=['Melanie', 'Caroline', 'LGBTQ support group', 'transgender stories', 'lake sunrise']
+2026-04-17 15:35:12.614 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:13.616 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=1.001s
+2026-04-17 15:35:13.616 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:13.616 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:35:13.728 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.112s
+2026-04-17 15:35:13.729 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:13.730 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:35:13.748 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:35:13.762 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:35:13.784 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:35:13.794 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=lake sunrise, limit=5
+2026-04-17 15:35:13.812 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec, unique_entities=5
+2026-04-17 15:35:13.813 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:34.036 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=20.223s
+2026-04-17 15:35:34.037 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:34.037 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:35:34.289 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.252s
+2026-04-17 15:35:34.289 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:34.290 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:34.290 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:35:34.365 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.076s
+2026-04-17 15:35:34.366 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:34.366 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:35:34.379 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec
+2026-04-17 15:35:34.387 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:35:34.396 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec
+2026-04-17 15:35:34.400 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:35:34.410 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec
+2026-04-17 15:35:34.415 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:35:34.425 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec
+2026-04-17 15:35:34.430 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_b09c565ce292449a8ddb7a5d056ec2d1, name=lake sunrise
+2026-04-17 15:35:34.443 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_b09c565ce292449a8ddb7a5d056ec2d1, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec
+2026-04-17 15:35:34.448 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_d4cfb93bc08448be8e842dab6f905bec, deduped_entities=5
+2026-04-17 15:35:34.448 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=5
+2026-04-17 15:35:34.448 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:39.017 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=4.569s
+2026-04-17 15:35:39.018 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:42.529 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=3.510s
+2026-04-17 15:35:42.529 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=5
+2026-04-17 15:35:42.533 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=7
+2026-04-17 15:35:42.533 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=7, attempt=1
+2026-04-17 15:35:42.756 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=7, attempt=1, runtime=0.223s
+2026-04-17 15:35:42.756 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=7
+2026-04-17 15:35:42.757 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_b09c565ce292449a8ddb7a5d056ec2d1, limit=5
+2026-04-17 15:35:42.764 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_997c9dad9158480ba91a2613f94c05ed, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_b09c565ce292449a8ddb7a5d056ec2d1
+2026-04-17 15:35:42.774 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:35:42.779 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:35:42.790 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:35:42.795 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:35:42.802 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:35:42.807 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_27dce4c3b0ac48d588857cf559c488d9, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:35:42.816 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=7, upserted_edges=4
+2026-04-17 15:35:42.816 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=14/419, source_id=locomo_user_0:D1:14, entity_count=5
+2026-04-17 15:35:42.816 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=14, total_turns=419
+2026-04-17 15:35:42.817 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=15/419, source_id=locomo_user_0:D1:15, speaker=Caroline
+2026-04-17 15:35:42.817 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:35:42.820 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:35:42.820 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:35:42.926 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.106s
+2026-04-17 15:35:42.927 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:35:42.927 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa, source_id=locomo_user_0:D1:15
+2026-04-17 15:35:42.938 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa, source_id=locomo_user_0:D1:15
+2026-04-17 15:35:42.938 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:43.865 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=0.927s
+2026-04-17 15:35:43.867 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa, names=['Caroline', 'Melanie', 'LGBTQ support group', 'transgender stories', 'painting']
+2026-04-17 15:35:43.867 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:35:44.684 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.817s
+2026-04-17 15:35:44.685 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:44.685 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:35:45.452 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.767s
+2026-04-17 15:35:45.452 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:35:45.452 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:35:45.459 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:35:45.464 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:35:45.470 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:35:45.476 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=painting, limit=5
+2026-04-17 15:35:45.481 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa, unique_entities=5
+2026-04-17 15:35:45.481 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:06.338 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=20.856s
+2026-04-17 15:36:06.338 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:06.339 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:36:06.437 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.098s
+2026-04-17 15:36:06.437 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:06.438 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:06.438 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:36:06.493 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.055s
+2026-04-17 15:36:06.493 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:06.493 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:36:06.510 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa
+2026-04-17 15:36:06.520 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:36:06.534 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa
+2026-04-17 15:36:06.541 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:36:06.556 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa
+2026-04-17 15:36:06.563 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:36:06.575 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa
+2026-04-17 15:36:06.581 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, name=painting
+2026-04-17 15:36:06.593 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa
+2026-04-17 15:36:06.597 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_6c1cb44952e94b21a4b3510c6fcff3aa, deduped_entities=5
+2026-04-17 15:36:06.598 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=5
+2026-04-17 15:36:06.598 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:11.516 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=4.918s
+2026-04-17 15:36:11.516 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:15.925 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=4.409s
+2026-04-17 15:36:15.926 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=5
+2026-04-17 15:36:15.931 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=9
+2026-04-17 15:36:15.931 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=9, attempt=1
+2026-04-17 15:36:16.100 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=9, attempt=1, runtime=0.169s
+2026-04-17 15:36:16.101 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=9
+2026-04-17 15:36:16.101 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489, limit=5
+2026-04-17 15:36:16.109 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_35e265d9731e48c7bd097f1ce284a361, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489
+2026-04-17 15:36:16.117 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, limit=5
+2026-04-17 15:36:16.123 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4f6ae525b6834073b3bd2ccc0895a392, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4
+2026-04-17 15:36:16.132 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:36:16.139 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_91439b072674441bbb78fc4feaba61b9, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:36:16.150 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:36:16.161 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:36:16.180 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489, limit=5
+2026-04-17 15:36:16.193 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_34def0e6f5d84365a8f1964466b5e6e1, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489
+2026-04-17 15:36:16.208 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:36:16.221 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:36:16.234 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:36:16.239 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_108f5b85ff0a4c6b9e577525c79315a3, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:36:16.250 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:36:16.264 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_056b515cc85b4ecb8767b85908ec959a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:36:16.270 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489, limit=5
+2026-04-17 15:36:16.275 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_ffa7b77e8d9244f997863205ba8c1958, source_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, target_uuid=entity_5a81d7dfc9b34329887d060f4a967489
+2026-04-17 15:36:16.284 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=9, upserted_edges=9
+2026-04-17 15:36:16.284 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=15/419, source_id=locomo_user_0:D1:15, entity_count=5
+2026-04-17 15:36:16.284 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=15, total_turns=419
+2026-04-17 15:36:16.285 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=16/419, source_id=locomo_user_0:D1:16, speaker=Melanie
+2026-04-17 15:36:16.285 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:36:16.288 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:36:16.288 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:36:16.340 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.052s
+2026-04-17 15:36:16.341 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:36:16.341 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6, source_id=locomo_user_0:D1:16
+2026-04-17 15:36:16.352 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6, source_id=locomo_user_0:D1:16
+2026-04-17 15:36:16.352 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:17.778 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.427s
+2026-04-17 15:36:17.779 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6, names=['Melanie', 'Caroline', 'LGBTQ support group', 'transgender stories', 'painting']
+2026-04-17 15:36:17.779 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:18.584 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.804s
+2026-04-17 15:36:18.584 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:18.584 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:36:18.660 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.075s
+2026-04-17 15:36:18.660 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:18.660 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:36:18.667 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:36:18.672 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:36:18.677 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:36:18.682 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=painting, limit=5
+2026-04-17 15:36:18.687 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6, unique_entities=5
+2026-04-17 15:36:18.688 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:44.605 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=25.917s
+2026-04-17 15:36:44.606 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:44.606 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:36:44.744 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.138s
+2026-04-17 15:36:44.745 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:44.745 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:44.745 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1
+2026-04-17 15:36:44.832 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=5, attempt=1, runtime=0.087s
+2026-04-17 15:36:44.832 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=5
+2026-04-17 15:36:44.832 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, name=Melanie
+2026-04-17 15:36:44.846 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_5a81d7dfc9b34329887d060f4a967489, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6
+2026-04-17 15:36:44.852 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:36:44.864 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6
+2026-04-17 15:36:44.869 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:36:44.880 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6
+2026-04-17 15:36:44.885 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:36:44.896 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6
+2026-04-17 15:36:44.902 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, name=painting
+2026-04-17 15:36:44.912 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6
+2026-04-17 15:36:44.917 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_f2ea06eea20a49ae9e5127649b226cc6, deduped_entities=5
+2026-04-17 15:36:44.917 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=5
+2026-04-17 15:36:44.918 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:50.034 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=5.117s
+2026-04-17 15:36:50.035 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:53.868 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=3.833s
+2026-04-17 15:36:53.868 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=5
+2026-04-17 15:36:53.871 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=8
+2026-04-17 15:36:53.871 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=8, attempt=1
+2026-04-17 15:36:53.948 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=8, attempt=1, runtime=0.076s
+2026-04-17 15:36:53.948 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=8
+2026-04-17 15:36:53.948 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4, limit=5
+2026-04-17 15:36:53.956 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_66f809bb9c764753b9f6f2635ab5bc50, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_c200cf22a98946ab95cdcd48ddf391f4
+2026-04-17 15:36:53.969 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:36:53.976 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_91439b072674441bbb78fc4feaba61b9, source_uuid=entity_5a81d7dfc9b34329887d060f4a967489, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:36:53.986 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:36:53.993 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_829cdc9b4b58417cbcc5fa1eb7b6c8b8, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:36:54.001 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:36:54.008 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:36:54.017 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=8, upserted_edges=4
+2026-04-17 15:36:54.017 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=16/419, source_id=locomo_user_0:D1:16, entity_count=5
+2026-04-17 15:36:54.017 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=16, total_turns=419
+2026-04-17 15:36:54.018 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=17/419, source_id=locomo_user_0:D1:17, speaker=Caroline
+2026-04-17 15:36:54.018 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:36:54.021 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:36:54.021 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:36:54.072 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.051s
+2026-04-17 15:36:54.072 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:36:54.072 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_43682fa0b9aa428fb457d21039c784c5, source_id=locomo_user_0:D1:17
+2026-04-17 15:36:54.080 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_43682fa0b9aa428fb457d21039c784c5, source_id=locomo_user_0:D1:17
+2026-04-17 15:36:54.080 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:55.352 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.272s
+2026-04-17 15:36:55.353 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_43682fa0b9aa428fb457d21039c784c5, names=['Caroline', 'Mel', 'LGBTQ support group', 'transgender stories']
+2026-04-17 15:36:55.354 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:36:56.322 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.968s
+2026-04-17 15:36:56.323 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:36:56.323 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:36:56.384 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.062s
+2026-04-17 15:36:56.385 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:36:56.385 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:36:56.392 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Mel, limit=5
+2026-04-17 15:36:56.397 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:36:56.403 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:36:56.408 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_43682fa0b9aa428fb457d21039c784c5, unique_entities=4
+2026-04-17 15:36:56.408 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:37:17.209 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, runtime=20.800s
+2026-04-17 15:37:17.209 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:37:17.209 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:37:17.348 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.139s
+2026-04-17 15:37:17.348 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:37:17.348 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:37:17.349 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1
+2026-04-17 15:37:17.490 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=4, attempt=1, runtime=0.141s
+2026-04-17 15:37:17.490 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=4
+2026-04-17 15:37:17.490 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, name=Caroline
+2026-04-17 15:37:17.504 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, episode_uuid=episode_43682fa0b9aa428fb457d21039c784c5
+2026-04-17 15:37:17.511 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, name=Mel
+2026-04-17 15:37:17.524 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_a64f581af267483d81be20ce8d20c0be, episode_uuid=episode_43682fa0b9aa428fb457d21039c784c5
+2026-04-17 15:37:17.535 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, name=LGBTQ support group
+2026-04-17 15:37:17.549 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, episode_uuid=episode_43682fa0b9aa428fb457d21039c784c5
+2026-04-17 15:37:17.556 [INFO] mnemis_build.neo4j - upsert entity | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, name=transgender stories
+2026-04-17 15:37:17.571 [INFO] mnemis_build.neo4j - connect entity to episode | group_id=locomo_user_0, entity_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, episode_uuid=episode_43682fa0b9aa428fb457d21039c784c5
+2026-04-17 15:37:17.577 [INFO] mnemis_build.base_graph - entity extraction done | group_id=locomo_user_0, episode_uuid=episode_43682fa0b9aa428fb457d21039c784c5, deduped_entities=4
+2026-04-17 15:37:17.578 [INFO] mnemis_build.base_graph - edge extraction start | group_id=locomo_user_0, entity_count=4
+2026-04-17 15:37:17.578 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:37:24.603 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_extraction, model=gpt-4o-mini, attempt=1, runtime=7.024s
+2026-04-17 15:37:24.603 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:37:29.481 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=edge_reflection, model=gpt-4o-mini, attempt=1, runtime=4.877s
+2026-04-17 15:37:29.481 [INFO] mnemis_build.neo4j - fetch entities by name | group_id=locomo_user_0, name_count=4
+2026-04-17 15:37:29.486 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:37:29.486 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1
+2026-04-17 15:37:29.598 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1, runtime=0.112s
+2026-04-17 15:37:29.598 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:37:29.598 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be, limit=5
+2026-04-17 15:37:29.611 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_712b2e8f84854280860c79893288390e, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_a64f581af267483d81be20ce8d20c0be
+2026-04-17 15:37:29.625 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, limit=5
+2026-04-17 15:37:29.636 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_6cab1f818473462db95f6cdc391d56c6, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc
+2026-04-17 15:37:29.648 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:37:29.655 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_c51af7000bb54caaad4fdb51fcad561f, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:37:29.668 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:37:29.683 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_4a38e39f826542e584aef0b47c7abb0a, source_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:37:29.703 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67, limit=5
+2026-04-17 15:37:29.718 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_870dfaa24bf04efda2ee83f549325e31, source_uuid=entity_9df8c3dbf0734a8e92ebc740395710fc, target_uuid=entity_1f8032d1b96b4107bf64e1468081bc67
+2026-04-17 15:37:29.735 [INFO] mnemis_build.neo4j - edge dedup search | group_id=locomo_user_0, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c, limit=5
+2026-04-17 15:37:29.742 [INFO] mnemis_build.neo4j - upsert edge | group_id=locomo_user_0, edge_uuid=fact_9ddc08f35d9b4ec78bd561d860442685, source_uuid=entity_a64f581af267483d81be20ce8d20c0be, target_uuid=entity_7a74b0772f0f4ddeb4df561294f20c6c
+2026-04-17 15:37:29.761 [INFO] mnemis_build.base_graph - edge extraction done | group_id=locomo_user_0, generated_edges=6, upserted_edges=6
+2026-04-17 15:37:29.761 [INFO] mnemis_build.base_graph - turn done | group_id=locomo_user_0, turn=17/419, source_id=locomo_user_0:D1:17, entity_count=4
+2026-04-17 15:37:29.762 [INFO] mnemis_build.cli.progress - turn progress | user_index=0, group_id=locomo_user_0, slot=1, completed_turns=17, total_turns=419
+2026-04-17 15:37:29.762 [INFO] mnemis_build.base_graph - turn start | group_id=locomo_user_0, turn=18/419, source_id=locomo_user_0:D1:18, speaker=Melanie
+2026-04-17 15:37:29.763 [INFO] mnemis_build.neo4j - fetch recent episodes | group_id=locomo_user_0, limit=6
+2026-04-17 15:37:29.766 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:37:29.767 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1
+2026-04-17 15:37:29.835 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=1, attempt=1, runtime=0.068s
+2026-04-17 15:37:29.835 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=1
+2026-04-17 15:37:29.836 [INFO] mnemis_build.neo4j - upsert episode | group_id=locomo_user_0, episode_uuid=episode_091b6997b9ac441d9eb7127ce5860520, source_id=locomo_user_0:D1:18
+2026-04-17 15:37:29.857 [INFO] mnemis_build.base_graph - entity extraction start | group_id=locomo_user_0, episode_uuid=episode_091b6997b9ac441d9eb7127ce5860520, source_id=locomo_user_0:D1:18
+2026-04-17 15:37:29.857 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:37:31.095 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_extraction, model=gpt-4o-mini, attempt=1, runtime=1.237s
+2026-04-17 15:37:31.095 [INFO] mnemis_build.base_graph - entity names extracted | group_id=locomo_user_0, episode_uuid=episode_091b6997b9ac441d9eb7127ce5860520, names=['Melanie', 'Caroline', 'LGBTQ support group', 'transgender stories']
+2026-04-17 15:37:31.096 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:37:31.942 [INFO] mnemis_build.llm - chat completion done | stage=base_graph_ingestion, operation=entity_name_reflection, model=gpt-4o-mini, attempt=1, runtime=0.846s
+2026-04-17 15:37:31.942 [INFO] mnemis_build.llm - embedding request start | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:37:31.943 [INFO] mnemis_build.llm - embedding batch start | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1
+2026-04-17 15:37:32.022 [INFO] mnemis_build.llm - embedding batch done | model=Qwen/Qwen3-Embedding-0.6B, input_count=6, attempt=1, runtime=0.079s
+2026-04-17 15:37:32.023 [INFO] mnemis_build.llm - embedding request done | model=Qwen/Qwen3-Embedding-0.6B, total_inputs=6
+2026-04-17 15:37:32.023 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Melanie, limit=5
+2026-04-17 15:37:32.035 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=Caroline, limit=5
+2026-04-17 15:37:32.045 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=LGBTQ support group, limit=5
+2026-04-17 15:37:32.056 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=transgender stories, limit=5
+2026-04-17 15:37:32.068 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=kids, limit=5
+2026-04-17 15:37:32.079 [INFO] mnemis_build.neo4j - entity dedup search | group_id=locomo_user_0, name=painting, limit=5
+2026-04-17 15:37:32.089 [INFO] mnemis_build.base_graph - entity candidate resolution done | group_id=locomo_user_0, episode_uuid=episode_091b6997b9ac441d9eb7127ce5860520, unique_entities=6
+2026-04-17 15:37:32.089 [INFO] mnemis_build.llm - chat completion start | stage=base_graph_ingestion, operation=entity_detail_generation, model=gpt-4o-mini, attempt=1, message_count=2
+2026-04-17 15:37:45.193 [INFO] mnemis_build.cli.rebuild_user - closing neo4j store | user_index=0, group_id=locomo_user_0
+2026-04-17 15:37:45.194 [INFO] mnemis_build.cli.progress - user slot released | user_index=0, group_id=locomo_user_0, slot=1, was_active=True

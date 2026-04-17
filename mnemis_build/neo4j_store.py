@@ -5,6 +5,7 @@ import re
 from typing import Any
 
 from .config import BuildConfig
+from .logging_utils import get_logger
 from .models import CategoryRecord, EdgeRecord, EntityRecord, EpisodeInput
 
 
@@ -18,6 +19,7 @@ class Neo4jGraphStore:
                 "Install it with: python -m pip install -r requirements-mnemis-build.txt"
             ) from exc
         self.config = config
+        self.logger = get_logger("neo4j")
         self.driver = AsyncGraphDatabase.driver(
             config.neo4j_url,
             auth=(config.neo4j_user, config.neo4j_password),
@@ -61,6 +63,7 @@ class Neo4jGraphStore:
         )[:limit]
 
     async def ensure_indexes(self) -> None:
+        self.logger.info("ensure indexes start")
         queries = [
             "CREATE CONSTRAINT entity_uuid IF NOT EXISTS FOR (n:Entity) REQUIRE n.uuid IS UNIQUE",
             "CREATE CONSTRAINT episode_uuid IF NOT EXISTS FOR (n:Episodic) REQUIRE n.uuid IS UNIQUE",
@@ -76,8 +79,10 @@ class Neo4jGraphStore:
         ]
         for query in queries:
             await self.execute(query)
+        self.logger.info("ensure indexes done | query_count=%s", len(queries))
 
     async def clear_group(self, group_id: str) -> None:
+        self.logger.info("clear group start | group_id=%s", group_id)
         await self.execute(
             """
             MATCH (n)
@@ -86,8 +91,10 @@ class Neo4jGraphStore:
             """,
             group_id=group_id,
         )
+        self.logger.info("clear group done | group_id=%s", group_id)
 
     async def fetch_recent_episodes(self, group_id: str, limit: int) -> list[dict[str, Any]]:
+        self.logger.info("fetch recent episodes | group_id=%s, limit=%s", group_id, limit)
         result = await self.execute(
             """
             MATCH (e:Episodic {group_id: $group_id})
@@ -107,6 +114,7 @@ class Neo4jGraphStore:
         embedding: list[float],
         limit: int = 5,
     ) -> list[dict[str, Any]]:
+        self.logger.info("entity dedup search | group_id=%s, name=%s, limit=%s", group_id, name, limit)
         query = self._sanitize_fulltext_query(name)
         fulltext_result = await self.execute(
             """
@@ -248,6 +256,13 @@ class Neo4jGraphStore:
         target_uuid: str,
         limit: int = 5,
     ) -> list[dict[str, Any]]:
+        self.logger.info(
+            "edge dedup search | group_id=%s, source_uuid=%s, target_uuid=%s, limit=%s",
+            group_id,
+            source_uuid,
+            target_uuid,
+            limit,
+        )
         query = self._sanitize_fulltext_query(fact)
         fulltext_result = await self.execute(
             """
@@ -351,6 +366,7 @@ class Neo4jGraphStore:
         )
 
     async def upsert_episode(self, group_id: str, episode_uuid: str, episode: EpisodeInput, embedding: list[float]) -> None:
+        self.logger.info("upsert episode | group_id=%s, episode_uuid=%s, source_id=%s", group_id, episode_uuid, episode.source_id)
         metadata_json = json.dumps(
             {key: value for key, value in episode.metadata.items() if value is not None},
             ensure_ascii=False,
@@ -378,6 +394,7 @@ class Neo4jGraphStore:
         )
 
     async def upsert_entity(self, entity: EntityRecord, name_embedding: list[float], summary_embedding: list[float]) -> None:
+        self.logger.info("upsert entity | group_id=%s, entity_uuid=%s, name=%s", entity.group_id, entity.uuid, entity.name)
         await self.execute(
             """
             MERGE (n:Entity {uuid: $uuid})
@@ -404,6 +421,7 @@ class Neo4jGraphStore:
         )
 
     async def connect_entity_to_episode(self, entity_uuid: str, episode_uuid: str, group_id: str) -> None:
+        self.logger.info("connect entity to episode | group_id=%s, entity_uuid=%s, episode_uuid=%s", group_id, entity_uuid, episode_uuid)
         await self.execute(
             """
             MATCH (n:Entity {uuid: $entity_uuid, group_id: $group_id})
@@ -416,6 +434,7 @@ class Neo4jGraphStore:
         )
 
     async def fetch_entities_by_name(self, group_id: str, names: list[str]) -> dict[str, dict[str, Any]]:
+        self.logger.info("fetch entities by name | group_id=%s, name_count=%s", group_id, len(names))
         result = await self.execute(
             """
             MATCH (n:Entity {group_id: $group_id})
@@ -429,6 +448,13 @@ class Neo4jGraphStore:
         return {record["name"]: dict(record) for record in result.records}
 
     async def upsert_edge(self, edge: EdgeRecord, fact_embedding: list[float], source_uuid: str, target_uuid: str) -> None:
+        self.logger.info(
+            "upsert edge | group_id=%s, edge_uuid=%s, source_uuid=%s, target_uuid=%s",
+            edge.group_id,
+            edge.uuid,
+            source_uuid,
+            target_uuid,
+        )
         await self.execute(
             """
             MATCH (a:Entity {uuid: $source_uuid})
@@ -451,6 +477,7 @@ class Neo4jGraphStore:
         )
 
     async def clear_hierarchy(self, group_id: str) -> None:
+        self.logger.info("clear hierarchy start | group_id=%s", group_id)
         await self.execute(
             """
             MATCH (c:Category {group_id: $group_id})
@@ -458,8 +485,10 @@ class Neo4jGraphStore:
             """,
             group_id=group_id,
         )
+        self.logger.info("clear hierarchy done | group_id=%s", group_id)
 
     async def fetch_layer_zero_nodes(self, group_id: str) -> list[dict[str, Any]]:
+        self.logger.info("fetch layer zero nodes | group_id=%s", group_id)
         result = await self.execute(
             """
             MATCH (n:Entity {group_id: $group_id})
@@ -472,6 +501,13 @@ class Neo4jGraphStore:
         return [dict(record) for record in result.records]
 
     async def upsert_category(self, category: CategoryRecord, summary_embedding: list[float]) -> None:
+        self.logger.info(
+            "upsert category | group_id=%s, category_uuid=%s, layer=%s, name=%s",
+            category.group_id,
+            category.uuid,
+            category.layer,
+            category.name,
+        )
         labels = f":Category:Category_{category.layer}"
         await self.execute(
             f"""
@@ -493,6 +529,7 @@ class Neo4jGraphStore:
         )
 
     async def connect_category(self, parent_uuid: str, child_uuid: str, group_id: str) -> None:
+        self.logger.info("connect category | group_id=%s, parent_uuid=%s, child_uuid=%s", group_id, parent_uuid, child_uuid)
         await self.execute(
             """
             MATCH (p {uuid: $parent_uuid, group_id: $group_id})

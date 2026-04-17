@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from .config import BuildConfig
 from .llm import OpenAILLMClient
+from .logging_utils import get_logger
 from .models import CategoryAssignmentPayload, CategoryDetailsPayload, CategoryRecord, IndexedNode, make_uuid
 from .neo4j_store import Neo4jGraphStore
 from .prompts import (
@@ -39,8 +40,10 @@ class HierarchicalGraphBuilder:
         self.store = store
         self.llm = llm
         self.config = config
+        self.logger = get_logger("hierarchy")
 
     async def rebuild(self, group_id: str) -> list[CategoryRecord]:
+        self.logger.info("hierarchy rebuild start | group_id=%s", group_id)
         await self.store.clear_hierarchy(group_id)
         current_nodes = [
             IndexedNode(index=i, layer=0, **node)
@@ -52,6 +55,7 @@ class HierarchicalGraphBuilder:
         for layer in range(1, self.config.max_hierarchy_layers + 1):
             if not current_nodes:
                 break
+            self.logger.info("hierarchy layer start | group_id=%s, layer=%s, input_nodes=%s", group_id, layer, len(current_nodes))
             assignable_nodes, speaker_nodes = self._partition_nodes_for_assignment(layer, current_nodes)
             assignments = await self._extract_categories(
                 layer,
@@ -68,8 +72,10 @@ class HierarchicalGraphBuilder:
             )
             categories = materialized.categories
             if not categories:
+                self.logger.info("hierarchy layer empty | group_id=%s, layer=%s", group_id, layer)
                 break
             if not self._passes_compression(layer, current_nodes, materialized):
+                self.logger.info("hierarchy compression stop | group_id=%s, layer=%s, category_count=%s", group_id, layer, len(categories))
                 break
 
             summary_embeddings = await self.llm.embed([category.summary for category in categories])
@@ -90,6 +96,8 @@ class HierarchicalGraphBuilder:
                 )
                 for i, category in enumerate(categories)
             ]
+            self.logger.info("hierarchy layer done | group_id=%s, layer=%s, category_count=%s", group_id, layer, len(categories))
+        self.logger.info("hierarchy rebuild done | group_id=%s, created_categories=%s", group_id, len(created))
         return created
 
     async def _extract_categories(
@@ -101,6 +109,7 @@ class HierarchicalGraphBuilder:
     ) -> CategoryAssignmentPayload:
         if not nodes:
             return CategoryAssignmentPayload(assignments=[])
+        self.logger.info("category assignment start | layer=%s, node_count=%s", layer, len(nodes))
         content = "\n".join(
             f"{node.index}. {node.name}: [{node.summary}] tags={node.tag}"
             for node in nodes[: self.config.max_categories_per_call] if self.config.max_categories_per_call > 0
@@ -112,7 +121,7 @@ class HierarchicalGraphBuilder:
             f"- {name}: {summary}"
             for name, summary in sorted(existing_categories.items())
         ) or "None"
-        return await self.llm.complete_json(
+        payload = await self.llm.complete_json(
             CategoryAssignmentPayload,
             [
                 {"role": "system", "content": HIERARCHICAL_SYSTEM_PROMPT},
@@ -131,6 +140,8 @@ class HierarchicalGraphBuilder:
             operation="category_assignment",
             require_json_object=False,
         )
+        self.logger.info("category assignment done | layer=%s, assignment_count=%s", layer, len(payload.assignments))
+        return payload
 
     def _is_appendix_prompt_speaker_node(self, node: IndexedNode) -> bool:
         return node.name.strip().lower() in {"user", "i", "me"}
@@ -241,6 +252,7 @@ class HierarchicalGraphBuilder:
     ) -> dict[str, dict[str, object]]:
         if not grouped:
             return {}
+        self.logger.info("category detail generation start | layer=%s, category_count=%s", layer, len(grouped))
         category_blocks: list[str] = []
         for name, members in grouped.items():
             lines = [f"Category: {name}", "Members:"]
@@ -261,7 +273,7 @@ class HierarchicalGraphBuilder:
             stage="hierarchical_graph_ingestion",
             operation="category_detail_generation",
         )
-        return {
+        result = {
             category.name: {
                 "summary": category.summary.strip(),
                 "tag": [tag.strip() for tag in category.tag if tag.strip()][:5],
@@ -269,6 +281,8 @@ class HierarchicalGraphBuilder:
             for category in payload.categories
             if category.name.strip()
         }
+        self.logger.info("category detail generation done | layer=%s, detailed_category_count=%s", layer, len(result))
+        return result
 
     def _passes_compression(
         self,
