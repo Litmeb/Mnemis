@@ -58,6 +58,26 @@ class MnemisRetriever:
                 current["rrf_score"] = max(current.get("rrf_score", 0.0), item.get("rrf_score", 0.0))
         return list(merged.values())
 
+    def _sort_candidate_pool(
+        self,
+        items: list[dict[str, Any]],
+        *,
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
+        ranked = sorted(
+            items,
+            key=lambda item: (
+                item.get("rrf_score", 0.0),
+                item.get("matched_entity_count", 0),
+                item.get("fulltext_score", 0.0),
+                item.get("similarity_score", 0.0),
+            ),
+            reverse=True,
+        )
+        if limit is None:
+            return ranked
+        return ranked[:limit]
+
     def _normalize_timestamp(self, value: Any) -> str | Any:
         if isinstance(value, datetime):
             return value.strftime("%Y/%m/%d (%a) %H:%M")
@@ -227,17 +247,31 @@ class MnemisRetriever:
 
         neighbors = await self.store.fetch_one_hop_neighbors(group_id, list(selected_entities))
         selected_entities.update({node["uuid"]: node for node in neighbors["nodes"]})
+        episode_pool = self._merge_items_by_uuid(neighbors["episodes"])
+        edge_pool = self._merge_items_by_uuid(neighbors["edges"])
+        node_pool = self._merge_items_by_uuid(list(selected_entities.values()))
+        self.logger.info(
+            "system2 hierarchy pool | query=%r, selected_entities=%s, selected_categories=%s, raw_episodes=%s, merged_unique_episodes=%s, raw_edges=%s, merged_unique_edges=%s, raw_nodes=%s, merged_unique_nodes=%s",
+            query,
+            len(selected_entities),
+            len(selected_categories),
+            len(neighbors["episodes"]),
+            len(episode_pool),
+            len(neighbors["edges"]),
+            len(edge_pool),
+            len(selected_entities),
+            len(node_pool),
+        )
         return {
-            "episodes": self._format_items(neighbors["episodes"]),
-            "edges": self._format_items(neighbors["edges"]),
-            "nodes": self._format_items(list(selected_entities.values())),
+            "episodes": self._format_items(episode_pool),
+            "edges": self._format_items(edge_pool),
+            "nodes": self._format_items(node_pool),
         }
 
     async def _system1_retrieve(self, query: str, group_id: str) -> dict[str, list[dict[str, Any]]]:
         query_embedding = (await self.llm.embed([query]))[0]
         candidate_limit = self.config.retrieval_candidate_limit
         entity_candidates = await self.store.search_entities(group_id, query, query_embedding, limit=candidate_limit)
-        entity_candidates = entity_candidates[: self.config.entity_top_k]
         candidate_scores = {
             item["uuid"]: item.get("rrf_score", 0.0)
             for item in entity_candidates
@@ -277,8 +311,11 @@ class MnemisRetriever:
         edges = self._annotate_route(expanded["edges"], branch="entity_expansion", score_lookup=expanded_edge_scores)
         expanded_nodes = self._annotate_route(expanded["nodes"], branch="entity_expansion", score_lookup=expanded_node_scores)
         nodes = self._merge_items_by_uuid(nodes, expanded_nodes)
+        episode_pool = self._sort_candidate_pool(episodes, limit=candidate_limit)
+        node_pool = self._sort_candidate_pool(nodes, limit=candidate_limit)
+        edge_pool = self._sort_candidate_pool(edges, limit=candidate_limit)
         self.logger.info(
-            "system1 entity-first | query=%r, entity_candidates=%s, entity_preview=%s, expanded_episodes=%s, expanded_episode_sources=%s, expanded_edges=%s, expanded_neighbor_nodes=%s, direct_episode_hits=%s",
+            "system1 entity-first | query=%r, raw_entity_candidates=%s, entity_preview=%s, raw_episodes=%s, merged_unique_episodes=%s, episode_pool=%s, expanded_episode_sources=%s, raw_edges=%s, merged_unique_edges=%s, edge_pool=%s, raw_nodes=%s, merged_unique_nodes=%s, node_pool=%s, direct_episode_hits=%s",
             query,
             len(entity_candidates),
             [
@@ -289,43 +326,22 @@ class MnemisRetriever:
                 }
                 for item in entity_candidates[:5]
             ],
-            len(expanded["episodes"]),
+            len(expanded["episodes"]) + len(direct_episode_hits),
+            len(episodes),
+            len(episode_pool),
             [item.get("source_id") for item in expanded["episodes"][:10]],
             len(expanded["edges"]),
-            len(expanded["nodes"]),
+            len(edges),
+            len(edge_pool),
+            len(entity_candidates) + len(expanded["nodes"]),
+            len(nodes),
+            len(node_pool),
             len(direct_episode_hits),
         )
         return {
-            "episodes": self._format_items(sorted(
-                episodes,
-                key=lambda item: (
-                    item.get("rrf_score", 0.0),
-                    item.get("matched_entity_count", 0),
-                    item.get("fulltext_score", 0.0),
-                    item.get("similarity_score", 0.0),
-                ),
-                reverse=True,
-            )[:candidate_limit]),
-            "nodes": self._format_items(sorted(
-                nodes,
-                key=lambda item: (
-                    item.get("rrf_score", 0.0),
-                    item.get("matched_entity_count", 0),
-                    item.get("fulltext_score", 0.0),
-                    item.get("similarity_score", 0.0),
-                ),
-                reverse=True,
-            )[:candidate_limit]),
-            "edges": self._format_items(sorted(
-                edges,
-                key=lambda item: (
-                    item.get("rrf_score", 0.0),
-                    item.get("matched_entity_count", 0),
-                    item.get("fulltext_score", 0.0),
-                    item.get("similarity_score", 0.0),
-                ),
-                reverse=True,
-            )[:candidate_limit]),
+            "episodes": self._format_items(episode_pool),
+            "nodes": self._format_items(node_pool),
+            "edges": self._format_items(edge_pool),
         }
 
     def _merge_route_items(
@@ -448,6 +464,49 @@ class MnemisRetriever:
         nodes, node_rerank = await self._rerank_items(query, "nodes", merged["nodes"], self.config.entity_top_k)
         edges, edge_rerank = await self._rerank_items(query, "edges", merged["edges"], self.config.edge_top_k)
         active_status = edge_rerank or node_rerank or episode_rerank
+        counts = {
+            "merged": {
+                "episodes": {
+                    "system1_count": len(system1["episodes"]),
+                    "system2_count": len(system2["episodes"]),
+                    "raw_count": len(system1["episodes"]) + len(system2["episodes"]),
+                    "merged_unique_count": len(merged["episodes"]),
+                },
+                "nodes": {
+                    "system1_count": len(system1["nodes"]),
+                    "system2_count": len(system2["nodes"]),
+                    "raw_count": len(system1["nodes"]) + len(system2["nodes"]),
+                    "merged_unique_count": len(merged["nodes"]),
+                },
+                "edges": {
+                    "system1_count": len(system1["edges"]),
+                    "system2_count": len(system2["edges"]),
+                    "raw_count": len(system1["edges"]) + len(system2["edges"]),
+                    "merged_unique_count": len(merged["edges"]),
+                },
+            },
+            "final": {
+                "episodes": {"reranked_count": len(merged["episodes"]), "final_count": len(episodes)},
+                "nodes": {"reranked_count": len(merged["nodes"]), "final_count": len(nodes)},
+                "edges": {"reranked_count": len(merged["edges"]), "final_count": len(edges)},
+            },
+        }
+        self.logger.info(
+            "retrieval merge+rerank counts | query=%r, episodes_raw=%s, episodes_merged_unique=%s, episodes_reranked=%s, episodes_final=%s, nodes_raw=%s, nodes_merged_unique=%s, nodes_reranked=%s, nodes_final=%s, edges_raw=%s, edges_merged_unique=%s, edges_reranked=%s, edges_final=%s",
+            query,
+            counts["merged"]["episodes"]["raw_count"],
+            counts["merged"]["episodes"]["merged_unique_count"],
+            counts["final"]["episodes"]["reranked_count"],
+            counts["final"]["episodes"]["final_count"],
+            counts["merged"]["nodes"]["raw_count"],
+            counts["merged"]["nodes"]["merged_unique_count"],
+            counts["final"]["nodes"]["reranked_count"],
+            counts["final"]["nodes"]["final_count"],
+            counts["merged"]["edges"]["raw_count"],
+            counts["merged"]["edges"]["merged_unique_count"],
+            counts["final"]["edges"]["reranked_count"],
+            counts["final"]["edges"]["final_count"],
+        )
         return {
             "system1": system1,
             "system2": system2,
@@ -463,6 +522,7 @@ class MnemisRetriever:
                     "edges": edge_rerank.to_dict(),
                 },
             },
+            "counts": counts,
             "final": {
                 "episodes": episodes,
                 "nodes": nodes,

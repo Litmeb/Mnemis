@@ -291,7 +291,10 @@ def test_system1_entity_first_logs_candidate_and_expansion_counts(
     assert [item["source_id"] for item in result["episodes"][:2]] == ["D3:13", "D2:14"]
     combined = "\n".join(messages)
     assert "system1 entity-first" in combined
-    assert "entity_candidates=2" in combined
-    assert "expanded_episodes=2" in combined
+    assert "raw_entity_candidates=2" in combined
+    assert "raw_episodes=3" in combined
+    assert "merged_unique_episodes=3" in combined
+    assert "episode_pool=3" in combined
     assert "expanded_episode_sources=['D3:13', 'D2:14']" in combined
-    assert "expanded_edges=1" in combined
+    assert "raw_edges=1" in combined
+    assert "merged_unique_edges=1" in combined
