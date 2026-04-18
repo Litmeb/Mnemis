@@ -228,6 +228,109 @@ class Neo4jGraphStore:
             limit=limit,
         )
 
+    async def expand_entities_for_retrieval(
+        self,
+        group_id: str,
+        entity_uuids: list[str],
+        limit: int = 50,
+    ) -> dict[str, list[dict[str, Any]]]:
+        if not entity_uuids:
+            return {"episodes": [], "edges": [], "nodes": []}
+        self.logger.info(
+            "expand entities for retrieval | group_id=%s, entity_count=%s, limit=%s",
+            group_id,
+            len(entity_uuids),
+            limit,
+        )
+        episode_result = await self.execute(
+            """
+            MATCH (seed:Entity)-[:MENTIONS]->(episode:Episodic)
+            WHERE seed.group_id = $group_id AND seed.uuid IN $entity_uuids
+            WITH episode,
+                 collect(DISTINCT seed.uuid) AS matched_entity_uuids,
+                 collect(DISTINCT seed.name) AS matched_entity_names,
+                 count(DISTINCT seed) AS matched_entity_count
+            RETURN episode.uuid AS uuid,
+                   episode.content AS content,
+                   episode.valid_at AS valid_at,
+                   episode.source_id AS source_id,
+                   matched_entity_uuids,
+                   matched_entity_names,
+                   matched_entity_count
+            ORDER BY matched_entity_count DESC, episode.valid_at DESC
+            LIMIT $limit
+            """,
+            group_id=group_id,
+            entity_uuids=entity_uuids,
+            limit=limit,
+        )
+        edge_result = await self.execute(
+            """
+            MATCH (seed:Entity)-[rel:RELATES_TO]-(neighbor:Entity)
+            WHERE seed.group_id = $group_id AND seed.uuid IN $entity_uuids
+            WITH rel, neighbor,
+                 startNode(rel) AS source,
+                 endNode(rel) AS target,
+                 properties(rel) AS rel_props,
+                 collect(DISTINCT seed.uuid) AS matched_entity_uuids,
+                 collect(DISTINCT seed.name) AS matched_entity_names,
+                 count(DISTINCT seed) AS matched_entity_count
+            RETURN rel.uuid AS uuid,
+                   rel.fact AS fact,
+                   rel.valid_at AS valid_at,
+                   rel_props['invalid_at'] AS invalid_at,
+                   source.uuid AS source_uuid,
+                   source.name AS source_name,
+                   target.uuid AS target_uuid,
+                   target.name AS target_name,
+                   neighbor.uuid AS entity_uuid,
+                   neighbor.name AS name,
+                   neighbor.tag AS tag,
+                   neighbor.summary AS summary,
+                   matched_entity_uuids,
+                   matched_entity_names,
+                   matched_entity_count
+            ORDER BY matched_entity_count DESC, rel.valid_at DESC
+            LIMIT $limit
+            """,
+            group_id=group_id,
+            entity_uuids=entity_uuids,
+            limit=limit,
+        )
+
+        episodes = [dict(record) for record in episode_result.records]
+        edges: dict[str, dict[str, Any]] = {}
+        nodes: dict[str, dict[str, Any]] = {}
+        for record in edge_result.records:
+            neighbor = dict(record)
+            edges[neighbor["uuid"]] = {
+                "uuid": neighbor["uuid"],
+                "fact": neighbor["fact"],
+                "valid_at": neighbor["valid_at"],
+                "invalid_at": neighbor["invalid_at"],
+                "source_uuid": neighbor["source_uuid"],
+                "source_name": neighbor["source_name"],
+                "target_uuid": neighbor["target_uuid"],
+                "target_name": neighbor["target_name"],
+                "matched_entity_uuids": neighbor["matched_entity_uuids"],
+                "matched_entity_names": neighbor["matched_entity_names"],
+                "matched_entity_count": neighbor["matched_entity_count"],
+            }
+            nodes[neighbor["entity_uuid"]] = {
+                "uuid": neighbor["entity_uuid"],
+                "name": neighbor["name"],
+                "tag": neighbor["tag"],
+                "summary": neighbor["summary"],
+                "matched_entity_uuids": neighbor["matched_entity_uuids"],
+                "matched_entity_names": neighbor["matched_entity_names"],
+                "matched_entity_count": neighbor["matched_entity_count"],
+            }
+        return {
+            "episodes": episodes,
+            "edges": list(edges.values()),
+            "nodes": list(nodes.values()),
+        }
+
     async def search_episodes(
         self,
         group_id: str,

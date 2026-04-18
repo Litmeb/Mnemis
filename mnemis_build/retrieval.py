@@ -26,6 +26,38 @@ class MnemisRetriever:
         self.reranker = build_reranker(llm, config)
         self.logger = get_logger("retrieval")
 
+    def _annotate_route(
+        self,
+        items: list[dict[str, Any]],
+        *,
+        branch: str,
+        score_lookup: dict[str, float] | None = None,
+        fallback_score: float = 0.0,
+    ) -> list[dict[str, Any]]:
+        annotated: list[dict[str, Any]] = []
+        for item in items:
+            current = dict(item)
+            current["system1_branch"] = branch
+            current["rrf_score"] = score_lookup.get(current["uuid"], fallback_score) if score_lookup else current.get(
+                "rrf_score", fallback_score
+            )
+            annotated.append(current)
+        return annotated
+
+    def _merge_items_by_uuid(
+        self,
+        *item_groups: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        merged: dict[str, dict[str, Any]] = {}
+        for group in item_groups:
+            for item in group:
+                current = merged.setdefault(item["uuid"], {})
+                for key, value in item.items():
+                    if value is not None or key not in current:
+                        current[key] = value
+                current["rrf_score"] = max(current.get("rrf_score", 0.0), item.get("rrf_score", 0.0))
+        return list(merged.values())
+
     def _normalize_timestamp(self, value: Any) -> str | Any:
         if isinstance(value, datetime):
             return value.strftime("%Y/%m/%d (%a) %H:%M")
@@ -204,13 +236,96 @@ class MnemisRetriever:
     async def _system1_retrieve(self, query: str, group_id: str) -> dict[str, list[dict[str, Any]]]:
         query_embedding = (await self.llm.embed([query]))[0]
         candidate_limit = self.config.retrieval_candidate_limit
-        episodes = await self.store.search_episodes(group_id, query, query_embedding, limit=candidate_limit)
-        nodes = await self.store.search_entities(group_id, query, query_embedding, limit=candidate_limit)
-        edges = await self.store.search_edges(group_id, query, query_embedding, limit=candidate_limit)
+        entity_candidates = await self.store.search_entities(group_id, query, query_embedding, limit=candidate_limit)
+        entity_candidates = entity_candidates[: self.config.entity_top_k]
+        candidate_scores = {
+            item["uuid"]: item.get("rrf_score", 0.0)
+            for item in entity_candidates
+        }
+        expanded = await self.store.expand_entities_for_retrieval(
+            group_id,
+            [item["uuid"] for item in entity_candidates],
+            limit=candidate_limit,
+        )
+        expanded_episode_scores = {
+            item["uuid"]: max(
+                [candidate_scores.get(uuid, 0.0) for uuid in item.get("matched_entity_uuids", [])],
+                default=0.0,
+            )
+            for item in expanded["episodes"]
+        }
+        expanded_edge_scores = {
+            item["uuid"]: max(
+                [candidate_scores.get(uuid, 0.0) for uuid in item.get("matched_entity_uuids", [])],
+                default=0.0,
+            )
+            for item in expanded["edges"]
+        }
+        expanded_node_scores = {
+            item["uuid"]: max(
+                [candidate_scores.get(uuid, 0.0) for uuid in item.get("matched_entity_uuids", [])],
+                default=0.0,
+            )
+            for item in expanded["nodes"]
+        }
+        direct_episode_hits = await self.store.search_episodes(group_id, query, query_embedding, limit=candidate_limit)
+        nodes = self._annotate_route(entity_candidates, branch="entity_candidates")
+        episodes = self._merge_items_by_uuid(
+            self._annotate_route(expanded["episodes"], branch="entity_expansion", score_lookup=expanded_episode_scores),
+            self._annotate_route(direct_episode_hits, branch="direct_episode", fallback_score=0.0),
+        )
+        edges = self._annotate_route(expanded["edges"], branch="entity_expansion", score_lookup=expanded_edge_scores)
+        expanded_nodes = self._annotate_route(expanded["nodes"], branch="entity_expansion", score_lookup=expanded_node_scores)
+        nodes = self._merge_items_by_uuid(nodes, expanded_nodes)
+        self.logger.info(
+            "system1 entity-first | query=%r, entity_candidates=%s, entity_preview=%s, expanded_episodes=%s, expanded_episode_sources=%s, expanded_edges=%s, expanded_neighbor_nodes=%s, direct_episode_hits=%s",
+            query,
+            len(entity_candidates),
+            [
+                {
+                    "uuid": item["uuid"],
+                    "name": item.get("name"),
+                    "rrf_score": round(item.get("rrf_score", 0.0), 4),
+                }
+                for item in entity_candidates[:5]
+            ],
+            len(expanded["episodes"]),
+            [item.get("source_id") for item in expanded["episodes"][:10]],
+            len(expanded["edges"]),
+            len(expanded["nodes"]),
+            len(direct_episode_hits),
+        )
         return {
-            "episodes": self._format_items(episodes[: self.config.episode_top_k]),
-            "nodes": self._format_items(nodes[: self.config.entity_top_k]),
-            "edges": self._format_items(edges[: self.config.edge_top_k]),
+            "episodes": self._format_items(sorted(
+                episodes,
+                key=lambda item: (
+                    item.get("rrf_score", 0.0),
+                    item.get("matched_entity_count", 0),
+                    item.get("fulltext_score", 0.0),
+                    item.get("similarity_score", 0.0),
+                ),
+                reverse=True,
+            )[:candidate_limit]),
+            "nodes": self._format_items(sorted(
+                nodes,
+                key=lambda item: (
+                    item.get("rrf_score", 0.0),
+                    item.get("matched_entity_count", 0),
+                    item.get("fulltext_score", 0.0),
+                    item.get("similarity_score", 0.0),
+                ),
+                reverse=True,
+            )[:candidate_limit]),
+            "edges": self._format_items(sorted(
+                edges,
+                key=lambda item: (
+                    item.get("rrf_score", 0.0),
+                    item.get("matched_entity_count", 0),
+                    item.get("fulltext_score", 0.0),
+                    item.get("similarity_score", 0.0),
+                ),
+                reverse=True,
+            )[:candidate_limit]),
         }
 
     def _merge_route_items(
