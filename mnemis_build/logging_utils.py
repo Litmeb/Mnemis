@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from datetime import datetime
 
 
 LOGGER_NAME = "mnemis_build"
@@ -15,8 +16,22 @@ def get_logger(name: str | None = None) -> logging.Logger:
     return root
 
 
+def _default_log_path() -> Path:
+    base_dir = Path(os.getenv("MNEMIS_LOG_DIR", "results/logs"))
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return base_dir / timestamp / "mnemis_build.log"
+
+
+def _env_flag(name: str, *, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def configure_logging() -> Path:
-    log_path = Path(os.getenv("MNEMIS_LOG_PATH", "results/logs/mnemis_build.log"))
+    configured_log_path = os.getenv("MNEMIS_LOG_PATH")
+    log_path = Path(configured_log_path) if configured_log_path else _default_log_path()
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     logger = logging.getLogger(LOGGER_NAME)
@@ -39,11 +54,12 @@ def configure_logging() -> Path:
     file_handler._mnemis_handler = True  # type: ignore[attr-defined]
     logger.addHandler(file_handler)
 
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.INFO)
-    stream_handler.setFormatter(formatter)
-    stream_handler._mnemis_handler = True  # type: ignore[attr-defined]
-    logger.addHandler(stream_handler)
+    if _env_flag("MNEMIS_LOG_TO_CONSOLE"):
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.INFO)
+        stream_handler.setFormatter(formatter)
+        stream_handler._mnemis_handler = True  # type: ignore[attr-defined]
+        logger.addHandler(stream_handler)
 
     logger.info("logging configured at %s", log_path)
     return log_path

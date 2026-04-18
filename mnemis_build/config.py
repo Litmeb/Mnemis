@@ -61,6 +61,7 @@ class BuildConfig:
     rerank_allow_llm_fallback: bool
     embedding_model: str
     embedding_dim: int
+    max_coroutines: int
     recent_episode_window: int
     max_reflection_rounds: int
     force_base_speaker_entity: bool
@@ -68,6 +69,13 @@ class BuildConfig:
     min_children_per_category: int
     max_hierarchy_layers: int
     max_categories_per_call: int
+    hierarchy_assignment_batch_size: int
+    category_detail_batch_size: int
+    entity_name_max_completion_tokens: int
+    entity_reflection_max_completion_tokens: int
+    entity_detail_max_completion_tokens: int
+    edge_extraction_max_completion_tokens: int
+    edge_reflection_max_completion_tokens: int
     episode_top_k: int
     entity_top_k: int
     edge_top_k: int
@@ -107,6 +115,7 @@ class BuildConfig:
             rerank_allow_llm_fallback=_pick_bool_env("MNEMIS_RERANK_ALLOW_LLM_FALLBACK", default=True),
             embedding_model=_pick_env("MNEMIS_EMBEDDING_MODEL", default="Qwen/Qwen3-Embedding-0.6B") or "Qwen/Qwen3-Embedding-0.6B",
             embedding_dim=int(_pick_env("EMBEDDING_DIM", default="128") or "128"),
+            max_coroutines=int(_pick_env("MNEMIS_MAX_COROUTINES", default="8") or "8"),
             recent_episode_window=int(_pick_env("MNEMIS_RECENT_EPISODE_WINDOW", default="6") or "6"),
             max_reflection_rounds=int(_pick_env("MNEMIS_MAX_REFLECTION_ROUNDS", default="1") or "1"),
             force_base_speaker_entity=_pick_bool_env("MNEMIS_FORCE_BASE_SPEAKER_ENTITY", default=True),
@@ -116,6 +125,17 @@ class BuildConfig:
             min_children_per_category=int(_pick_env("MNEMIS_MIN_CHILDREN_PER_CATEGORY", default="2") or "2"),
             max_hierarchy_layers=int(_pick_env("MNEMIS_MAX_HIERARCHY_LAYERS", default="4") or "4"),
             max_categories_per_call=int(_pick_env("MNEMIS_MAX_CATEGORIES_PER_CALL", default="0") or "0"),
+            hierarchy_assignment_batch_size=int(
+                _pick_env("MNEMIS_HIERARCHY_ASSIGNMENT_BATCH_SIZE", default="96") or "96"
+            ),
+            category_detail_batch_size=int(
+                _pick_env("MNEMIS_CATEGORY_DETAIL_BATCH_SIZE", default="48") or "48"
+            ),
+            entity_name_max_completion_tokens=int(_pick_env("MNEMIS_ENTITY_NAME_MAX_COMPLETION_TOKENS", default="192") or "192"),
+            entity_reflection_max_completion_tokens=int(_pick_env("MNEMIS_ENTITY_REFLECTION_MAX_COMPLETION_TOKENS", default="192") or "192"),
+            entity_detail_max_completion_tokens=int(_pick_env("MNEMIS_ENTITY_DETAIL_MAX_COMPLETION_TOKENS", default="768") or "768"),
+            edge_extraction_max_completion_tokens=int(_pick_env("MNEMIS_EDGE_EXTRACTION_MAX_COMPLETION_TOKENS", default="768") or "768"),
+            edge_reflection_max_completion_tokens=int(_pick_env("MNEMIS_EDGE_REFLECTION_MAX_COMPLETION_TOKENS", default="512") or "512"),
             episode_top_k=int(_pick_env("MNEMIS_EPISODE_TOP_K", default="10") or "10"),
             entity_top_k=int(_pick_env("MNEMIS_ENTITY_TOP_K", default="20") or "20"),
             edge_top_k=int(_pick_env("MNEMIS_EDGE_TOP_K", default="20") or "20"),

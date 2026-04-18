@@ -57,8 +57,16 @@ class OpenAILLMClient:
         messages: Sequence[dict[str, str]],
         content: str,
         error: Exception,
+        model: type[BaseModel] | None = None,
     ) -> list[dict[str, str]]:
         snippet = content[-4000:] if len(content) > 4000 else content
+        schema_hint = ""
+        if model is not None:
+            try:
+                schema = json.dumps(model.model_json_schema(), ensure_ascii=False)
+                schema_hint = f"\nExpected JSON schema:\n{schema[:4000]}"
+            except Exception:
+                schema_hint = ""
         return [
             *list(messages),
             {"role": "assistant", "content": content},
@@ -68,11 +76,43 @@ class OpenAILLMClient:
                     "The previous reply was not valid complete JSON for the requested schema. "
                     f"Parser error: {error}. "
                     "Return the full response again as a single complete JSON value only, with no markdown fences "
-                    "and no explanatory text. If the previous response was truncated, regenerate it from scratch.\n\n"
+                    "and no explanatory text. Use the required field names exactly. "
+                    "Do not echo the input object unless the schema explicitly requires it. "
+                    "If the previous response was truncated, regenerate it from scratch."
+                    f"{schema_hint}\n\n"
                     f"Previous reply:\n{snippet}"
                 ),
             },
         ]
+
+    def _ensure_json_keyword_in_messages(self, messages: Sequence[dict[str, str]]) -> list[dict[str, str]]:
+        normalized_messages = [dict(message) for message in messages]
+        if any("json" in (message.get("content") or "").lower() for message in normalized_messages):
+            return normalized_messages
+        return [
+            {
+                "role": "system",
+                "content": "Return valid json only.",
+            },
+            *normalized_messages,
+        ]
+
+    async def _create_chat_completion(self, request: dict[str, Any]) -> Any:
+        try:
+            return await self.client.chat.completions.create(**request)
+        except Exception as exc:
+            if "max_completion_tokens" not in request:
+                raise
+            message = str(exc).lower()
+            if "max_completion_tokens" not in message or "unsupported" not in message and "unknown" not in message:
+                raise
+            fallback_request = dict(request)
+            fallback_request["max_tokens"] = fallback_request.pop("max_completion_tokens")
+            self.logger.warning(
+                "chat completion fallback | model=%s, switched_param=max_tokens",
+                fallback_request.get("model"),
+            )
+            return await self.client.chat.completions.create(**fallback_request)
 
     async def complete_json(
         self,
@@ -85,6 +125,7 @@ class OpenAILLMClient:
         model_name: str | None = None,
         temperature: float = 0.0,
         require_json_object: bool = True,
+        max_completion_tokens: int | None = None,
     ) -> T:
         selected_model = model_name or (self.config.small_llm_model if use_small_model else self.config.llm_model)
         current_messages = list(messages)
@@ -93,23 +134,30 @@ class OpenAILLMClient:
         last_finish_reason: str | None = None
 
         for attempt in range(1, _JSON_RETRY_LIMIT + 1):
+            request_messages = (
+                self._ensure_json_keyword_in_messages(current_messages)
+                if require_json_object
+                else list(current_messages)
+            )
             self.logger.info(
                 "chat completion start | stage=%s, operation=%s, model=%s, attempt=%s, message_count=%s",
                 stage,
                 operation,
                 selected_model,
                 attempt,
-                len(current_messages),
+                len(request_messages),
             )
             request: dict[str, Any] = {
                 "model": selected_model,
                 "temperature": temperature,
-                "messages": current_messages,
+                "messages": request_messages,
             }
             if require_json_object:
                 request["response_format"] = {"type": "json_object"}
+            if max_completion_tokens is not None and max_completion_tokens > 0:
+                request["max_completion_tokens"] = max_completion_tokens
             start = perf_counter()
-            response = await self.client.chat.completions.create(**request)
+            response = await self._create_chat_completion(request)
             runtime_seconds = perf_counter() - start
             self.logger.info(
                 "chat completion done | stage=%s, operation=%s, model=%s, attempt=%s, runtime=%.3fs",
@@ -153,7 +201,7 @@ class OpenAILLMClient:
                 )
                 if attempt >= _JSON_RETRY_LIMIT:
                     break
-                current_messages = self._build_json_retry_messages(messages, content, exc)
+                current_messages = self._build_json_retry_messages(messages, content, exc, model=model)
 
         content_snippet = last_content[:500]
         raise ValueError(
@@ -165,8 +213,15 @@ class OpenAILLMClient:
         )
 
     def parse_json_response(self, model: type[T], content: str) -> T:
-        # Some prompts allow either a top-level object or a top-level array.
-        return model.model_validate(self._parse_json_content(content))
+        parsed = self._parse_json_content(content)
+        try:
+            return model.model_validate(parsed)
+        except ValidationError as exc:
+            raise ValidationError.from_exception_data(
+                title=model.__name__,
+                line_errors=exc.errors(),
+                input_value=parsed,
+            ) from exc
 
     def _parse_json_content(self, content: str) -> Any:
         try:

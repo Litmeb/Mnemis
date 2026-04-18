@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from collections import OrderedDict
 
@@ -7,11 +8,13 @@ from .config import BuildConfig
 from .llm import OpenAILLMClient
 from .logging_utils import get_logger
 from .models import (
-    EdgeExtractionPayload,
-    EntityExtractionPayload,
+    EdgeRecord,
     EntityNameExtraction,
     EntityRecord,
     EpisodeInput,
+    MinimalEdgeExtractionPayload,
+    MinimalEntityExtractionPayload,
+    MinimalEntityRecord,
     make_uuid,
 )
 from .neo4j_store import Neo4jGraphStore
@@ -31,17 +34,48 @@ class BaseGraphBuilder:
         self.config = config
         self.logger = get_logger("base_graph")
 
+    async def _gather_limited(self, coroutines: list, *, label: str) -> list:
+        if not coroutines:
+            return []
+        limit = max(1, self.config.max_coroutines)
+        self.logger.info("parallel section start | label=%s, task_count=%s, limit=%s", label, len(coroutines), limit)
+        semaphore = asyncio.Semaphore(limit)
+
+        async def run_one(coro):
+            async with semaphore:
+                return await coro
+
+        results = await asyncio.gather(*(run_one(coro) for coro in coroutines))
+        self.logger.info("parallel section done | label=%s, task_count=%s, limit=%s", label, len(coroutines), limit)
+        return list(results)
+
     async def build(
         self,
         group_id: str,
         episodes: list[EpisodeInput],
         progress_callback=None,
+        start_index: int = 0,
     ) -> list[str]:
-        self.logger.info("base graph build start | group_id=%s, total_episodes=%s", group_id, len(episodes))
+        self.logger.info(
+            "base graph build start | group_id=%s, total_episodes=%s, start_index=%s",
+            group_id,
+            len(episodes),
+            start_index,
+        )
         await self.store.ensure_indexes()
         created_episode_ids: list[str] = []
         total_episodes = len(episodes)
-        for completed_count, episode in enumerate(episodes, start=1):
+        if start_index < 0:
+            start_index = 0
+        if start_index >= total_episodes:
+            self.logger.info(
+                "base graph build skipped | group_id=%s, start_index=%s, total_episodes=%s",
+                group_id,
+                start_index,
+                total_episodes,
+            )
+            return created_episode_ids
+        for completed_count, episode in enumerate(episodes[start_index:], start=start_index + 1):
             self.logger.info(
                 "turn start | group_id=%s, turn=%s/%s, source_id=%s, speaker=%s",
                 group_id,
@@ -51,13 +85,20 @@ class BaseGraphBuilder:
                 episode.speaker,
             )
             episode_uuid = make_uuid("episode")
-            created_episode_ids.append(episode_uuid)
-            recent = await self.store.fetch_recent_episodes(group_id, self.config.recent_episode_window)
+            recent = await self.store.fetch_recent_episodes(
+                group_id,
+                self.config.recent_episode_window,
+                exclude_source_id=episode.source_id,
+            )
             context = self._format_context(episode, recent)
             episode_embedding = (await self.llm.embed([episode.content]))[0]
-            await self.store.upsert_episode(group_id, episode_uuid, episode, episode_embedding)
+            episode_uuid = await self.store.upsert_episode(group_id, episode_uuid, episode, episode_embedding)
+            created_episode_ids.append(episode_uuid)
             deduped_entities = await self._extract_entities(group_id, episode_uuid, episode, context)
             await self._extract_edges(group_id, context, deduped_entities)
+            mark_episode_ingested = getattr(self.store, "mark_episode_ingested", None)
+            if callable(mark_episode_ingested):
+                await mark_episode_ingested(group_id, episode.source_id)
             self.logger.info(
                 "turn done | group_id=%s, turn=%s/%s, source_id=%s, entity_count=%s",
                 group_id,
@@ -96,6 +137,150 @@ class BaseGraphBuilder:
         if not self.config.force_base_speaker_entity:
             return None
         return episode.speaker.strip() or "user"
+
+    def _estimate_entity_detail_batch_size(self) -> int:
+        tokens = max(1, self.config.entity_detail_max_completion_tokens)
+        # Keep each response comfortably under the configured token budget.
+        return max(1, min(8, tokens // 128))
+
+    def _estimate_edge_batch_size(self) -> int:
+        tokens = max(1, self.config.edge_extraction_max_completion_tokens)
+        # Edge prompts expand quickly because they include entity summaries and context.
+        return max(2, min(6, tokens // 128))
+
+    def _build_fallback_entity_details(
+        self,
+        entities: list[EntityRecord],
+        *,
+        forced_speaker_names: set[str],
+    ) -> MinimalEntityExtractionPayload:
+        fallback_entities: list[MinimalEntityRecord] = []
+        for entity in entities:
+            normalized_name = self._normalize_text(entity.name)
+            summary = entity.summary.strip() or f"Entity mentioned in the conversation context: {entity.name}."
+            tags = list(entity.tag[:3])
+            if normalized_name in forced_speaker_names and "speaker" not in tags:
+                tags = ["speaker", *tags][:3]
+            fallback_entities.append(
+                MinimalEntityRecord(
+                    name=entity.name,
+                    summary=summary,
+                    tag=tags,
+                )
+            )
+        return MinimalEntityExtractionPayload(entities=fallback_entities)
+
+    async def _generate_entity_details(
+        self,
+        *,
+        group_id: str,
+        context: str,
+        entities: list[EntityRecord],
+        forced_speaker_names: set[str],
+    ) -> MinimalEntityExtractionPayload:
+        batch_size = self._estimate_entity_detail_batch_size()
+        detailed_entities: list[MinimalEntityRecord] = []
+
+        for start in range(0, len(entities), batch_size):
+            batch = entities[start : start + batch_size]
+            detail_payload = {
+                "group_id": group_id,
+                "entities": [{"name": entity.name} for entity in batch],
+                "context": context,
+            }
+            try:
+                details = await self.llm.complete_json(
+                    MinimalEntityExtractionPayload,
+                    [
+                        {"role": "system", "content": ENTITY_DETAILS_PROMPT},
+                        {"role": "user", "content": json.dumps(detail_payload, ensure_ascii=False)},
+                    ],
+                    stage="base_graph_ingestion",
+                    operation="entity_detail_generation",
+                    max_completion_tokens=self.config.entity_detail_max_completion_tokens,
+                )
+            except ValueError as exc:
+                self.logger.warning(
+                    "entity detail generation fallback | group_id=%s, entity_count=%s, batch_start=%s, batch_size=%s, error=%s",
+                    group_id,
+                    len(entities),
+                    start,
+                    len(batch),
+                    exc,
+                )
+                details = self._build_fallback_entity_details(
+                    batch,
+                    forced_speaker_names=forced_speaker_names,
+                )
+
+            by_name = {self._normalize_text(item.name): item for item in details.entities}
+            for entity in batch:
+                normalized_name = self._normalize_text(entity.name)
+                detail = by_name.get(normalized_name)
+                if detail is None:
+                    detail = self._build_fallback_entity_details(
+                        [entity],
+                        forced_speaker_names=forced_speaker_names,
+                    ).entities[0]
+                detailed_entities.append(detail)
+
+        return MinimalEntityExtractionPayload(entities=detailed_entities)
+
+    async def _generate_edges(
+        self,
+        *,
+        group_id: str,
+        context: str,
+        entities: list[EntityRecord],
+    ) -> list:
+        batch_size = self._estimate_edge_batch_size()
+        generated_edges = []
+        seen: set[tuple[str, str, str]] = set()
+
+        for start in range(0, len(entities), batch_size):
+            batch = entities[start : start + batch_size]
+            edge_payload = {
+                "group_id": group_id,
+                "entities": [
+                    {"name": entity.name, "summary": entity.summary, "tag": entity.tag}
+                    for entity in batch
+                ],
+                "context": context,
+            }
+            try:
+                extraction = await self.llm.complete_json(
+                    MinimalEdgeExtractionPayload,
+                    [
+                        {"role": "system", "content": EDGE_EXTRACTION_PROMPT},
+                        {"role": "user", "content": json.dumps(edge_payload, ensure_ascii=False)},
+                    ],
+                    stage="base_graph_ingestion",
+                    operation="edge_extraction",
+                    max_completion_tokens=self.config.edge_extraction_max_completion_tokens,
+                )
+                batch_edges = extraction.edges
+            except ValueError as exc:
+                self.logger.warning(
+                    "edge extraction fallback | group_id=%s, entity_count=%s, batch_start=%s, batch_size=%s, error=%s",
+                    group_id,
+                    len(entities),
+                    start,
+                    len(batch),
+                    exc,
+                )
+                batch_edges = []
+
+            for edge in batch_edges:
+                key = (
+                    self._normalize_text(edge.source_entity_name),
+                    self._normalize_text(edge.target_entity_name),
+                    self._normalize_text(edge.fact),
+                )
+                if key not in seen:
+                    seen.add(key)
+                    generated_edges.append(edge)
+
+        return generated_edges
 
     def _choose_entity_match(self, name: str, candidates: list[dict]) -> dict | None:
         normalized = self._normalize_text(name)
@@ -146,6 +331,7 @@ class BaseGraphBuilder:
             stage="base_graph_ingestion",
             operation="entity_name_extraction",
             use_small_model=True,
+            max_completion_tokens=self.config.entity_name_max_completion_tokens,
         )
         names = OrderedDict((name.strip(), None) for name in extraction.names if name.strip())
         self.logger.info("entity names extracted | group_id=%s, episode_uuid=%s, names=%s", group_id, episode_uuid, list(names.keys()))
@@ -163,6 +349,7 @@ class BaseGraphBuilder:
                 stage="base_graph_ingestion",
                 operation="entity_name_reflection",
                 use_small_model=True,
+                max_completion_tokens=self.config.entity_reflection_max_completion_tokens,
             )
             for name in reflection.names:
                 clean = name.strip()
@@ -172,8 +359,15 @@ class BaseGraphBuilder:
         embeddings = await self.llm.embed(list(names.keys()))
         deduped: list[EntityRecord] = []
         existing_by_name: dict[str, EntityRecord] = {}
-        for name, embedding in zip(names.keys(), embeddings):
-            candidates = await self.store.search_entity_dedup_candidates(group_id, name, embedding)
+        names_list = list(names.keys())
+        candidate_lists = await self._gather_limited(
+            [
+                self.store.search_entity_dedup_candidates(group_id, name, embedding)
+                for name, embedding in zip(names_list, embeddings)
+            ],
+            label="search_entity_dedup_candidates",
+        )
+        for name, candidates in zip(names_list, candidate_lists):
             candidate = self._choose_entity_match(name, candidates)
             if candidate is not None:
                 existing = EntityRecord(
@@ -208,28 +402,6 @@ class BaseGraphBuilder:
             len(existing_by_name),
         )
 
-        detail_payload = {
-            "group_id": group_id,
-            "entities": [
-                {
-                    "uuid": entity.uuid,
-                    "name": entity.name,
-                    "episode_idx": entity.episode_idx,
-                    "source_ids": entity.source_ids,
-                }
-                for entity in existing_by_name.values()
-            ],
-            "context": context,
-        }
-        details = await self.llm.complete_json(
-            EntityExtractionPayload,
-            [
-                {"role": "system", "content": ENTITY_DETAILS_PROMPT},
-                {"role": "user", "content": json.dumps(detail_payload, ensure_ascii=False)},
-            ],
-            stage="base_graph_ingestion",
-            operation="entity_detail_generation",
-        )
         existing_by_normalized_name = {
             self._normalize_text(name): entity
             for name, entity in existing_by_name.items()
@@ -239,25 +411,45 @@ class BaseGraphBuilder:
             for name in [forced_speaker_name]
             if name
         }
+        details = await self._generate_entity_details(
+            group_id=group_id,
+            context=context,
+            entities=list(existing_by_name.values()),
+            forced_speaker_names=forced_speaker_names,
+        )
 
         name_embeddings = await self.llm.embed([entity.name for entity in details.entities])
         summary_embeddings = await self.llm.embed([entity.summary for entity in details.entities])
-        for entity, name_embedding, summary_embedding in zip(details.entities, name_embeddings, summary_embeddings):
+        async def prepare_and_upsert_entity(entity, name_embedding, summary_embedding):
             normalized_name = self._normalize_text(entity.name)
             seed = existing_by_normalized_name.get(normalized_name)
-            if seed is not None:
-                entity.is_speaker = seed.is_speaker
+            record = EntityRecord(
+                uuid=seed.uuid if seed is not None else make_uuid("entity"),
+                group_id=group_id,
+                name=entity.name,
+                summary=entity.summary,
+                tag=entity.tag,
+                episode_idx=list(seed.episode_idx) if seed is not None else [],
+                source_ids=list(seed.source_ids) if seed is not None else [],
+                is_speaker=seed.is_speaker if seed is not None else False,
+            )
             if normalized_name in forced_speaker_names:
-                entity.is_speaker = True
-            entity.uuid = seed.uuid if seed is not None else self._normalize_generated_uuid(entity.uuid, "entity")
-            entity.group_id = group_id
-            if episode_uuid not in entity.episode_idx:
-                entity.episode_idx.append(episode_uuid)
-            if episode.source_id not in entity.source_ids:
-                entity.source_ids.append(episode.source_id)
-            await self.store.upsert_entity(entity, name_embedding, summary_embedding)
-            await self.store.connect_entity_to_episode(entity.uuid, episode_uuid, group_id)
-            deduped.append(entity)
+                record.is_speaker = True
+            if episode_uuid not in record.episode_idx:
+                record.episode_idx.append(episode_uuid)
+            if episode.source_id not in record.source_ids:
+                record.source_ids.append(episode.source_id)
+            await self.store.upsert_entity(record, name_embedding, summary_embedding)
+            await self.store.connect_entity_to_episode(record.uuid, episode_uuid, group_id)
+            return record
+
+        deduped = await self._gather_limited(
+            [
+                prepare_and_upsert_entity(entity, name_embedding, summary_embedding)
+                for entity, name_embedding, summary_embedding in zip(details.entities, name_embeddings, summary_embeddings)
+            ],
+            label="upsert_entity_and_connect",
+        )
         self.logger.info(
             "entity extraction done | group_id=%s, episode_uuid=%s, deduped_entities=%s",
             group_id,
@@ -275,69 +467,122 @@ class BaseGraphBuilder:
             {"name": entity.name, "summary": entity.summary, "tag": entity.tag}
             for entity in entities
         ]
-        edge_payload = {
-            "group_id": group_id,
-            "entities": entity_payload,
-            "context": context,
-        }
-        extraction = await self.llm.complete_json(
-            EdgeExtractionPayload,
-            [
-                {"role": "system", "content": EDGE_EXTRACTION_PROMPT},
-                {"role": "user", "content": json.dumps(edge_payload, ensure_ascii=False)},
-            ],
-            stage="base_graph_ingestion",
-            operation="edge_extraction",
+        edges = await self._generate_edges(
+            group_id=group_id,
+            context=context,
+            entities=entities,
         )
-        edges = extraction.edges
         for _ in range(self.config.max_reflection_rounds):
-            reflection = await self.llm.complete_json(
-                EdgeExtractionPayload,
-                [
-                    {"role": "system", "content": EDGE_REFLECTION_PROMPT},
-                    {
-                        "role": "user",
-                        "content": json.dumps(
-                            {
-                                "group_id": group_id,
-                                "entities": entity_payload,
-                                "context": context,
-                                "existing_edges": [edge.model_dump(mode="json") for edge in edges],
-                            },
-                            ensure_ascii=False,
-                        ),
-                    },
-                ],
-                stage="base_graph_ingestion",
-                operation="edge_reflection",
-            )
-            seen = {(edge.source_entity_name, edge.target_entity_name, edge.fact) for edge in edges}
+            try:
+                reflection = await self.llm.complete_json(
+                    MinimalEdgeExtractionPayload,
+                    [
+                        {"role": "system", "content": EDGE_REFLECTION_PROMPT},
+                        {
+                            "role": "user",
+                            "content": json.dumps(
+                                {
+                                    "group_id": group_id,
+                                    "available_entities": entity_payload,
+                                    "context": context,
+                                    "existing_edges": [edge.model_dump(mode="json") for edge in edges],
+                                },
+                                ensure_ascii=False,
+                            ),
+                        },
+                    ],
+                    stage="base_graph_ingestion",
+                    operation="edge_reflection",
+                    max_completion_tokens=self.config.edge_reflection_max_completion_tokens,
+                )
+            except ValueError as exc:
+                self.logger.warning(
+                    "edge reflection skipped after parse failure | group_id=%s, error=%s",
+                    group_id,
+                    exc,
+                )
+                break
+            seen = {
+                (
+                    self._normalize_text(edge.source_entity_name),
+                    self._normalize_text(edge.target_entity_name),
+                    self._normalize_text(edge.fact),
+                )
+                for edge in edges
+            }
             for edge in reflection.edges:
-                key = (edge.source_entity_name, edge.target_entity_name, edge.fact)
+                key = (
+                    self._normalize_text(edge.source_entity_name),
+                    self._normalize_text(edge.target_entity_name),
+                    self._normalize_text(edge.fact),
+                )
                 if key not in seen:
                     seen.add(key)
                     edges.append(edge)
 
+        if not edges:
+            self.logger.info("edge extraction produced no usable edges | group_id=%s, entity_count=%s", group_id, len(entities))
+            return
+
         entities_by_name = await self.store.fetch_entities_by_name(group_id, [entity.name for entity in entities])
         fact_embeddings = await self.llm.embed([edge.fact for edge in edges])
-        upserted_edges = 0
+        edge_jobs = []
         for edge, fact_embedding in zip(edges, fact_embeddings):
-            edge.uuid = self._normalize_generated_uuid(edge.uuid, "fact")
-            edge.group_id = group_id
             source = entities_by_name.get(edge.source_entity_name)
             target = entities_by_name.get(edge.target_entity_name)
             if not source or not target or source["uuid"] == target["uuid"]:
                 continue
-            existing_candidates = await self.store.search_edge_dedup_candidates(
-                group_id,
-                edge.fact,
-                fact_embedding,
-                source["uuid"],
-                target["uuid"],
+            edge_record = EdgeRecord(
+                uuid=make_uuid("fact"),
+                group_id=group_id,
+                source_entity_name=edge.source_entity_name,
+                target_entity_name=edge.target_entity_name,
+                fact=edge.fact,
+                valid_at=edge.valid_at,
+                invalid_at=None,
             )
+            edge_jobs.append(
+                {
+                    "edge": edge_record,
+                    "fact_embedding": fact_embedding,
+                    "source_uuid": source["uuid"],
+                    "target_uuid": target["uuid"],
+                }
+            )
+
+        candidate_lists = await self._gather_limited(
+            [
+                self.store.search_edge_dedup_candidates(
+                    group_id,
+                    job["edge"].fact,
+                    job["fact_embedding"],
+                    job["source_uuid"],
+                    job["target_uuid"],
+                )
+                for job in edge_jobs
+            ],
+            label="search_edge_dedup_candidates",
+        )
+
+        async def finalize_and_upsert_edge(job: dict, existing_candidates: list[dict]) -> bool:
+            edge = job["edge"]
             existing = self._choose_edge_match(edge.fact, existing_candidates)
             if existing is not None:
                 edge.uuid = existing["uuid"]
-            await self.store.upsert_edge(edge, fact_embedding, source["uuid"], target["uuid"])
-            upserted_edges += 1
+            await self.store.upsert_edge(
+                edge,
+                job["fact_embedding"],
+                job["source_uuid"],
+                job["target_uuid"],
+            )
+            return True
+
+        upsert_results = await self._gather_limited(
+            [
+                finalize_and_upsert_edge(job, existing_candidates)
+                for job, existing_candidates in zip(edge_jobs, candidate_lists)
+            ],
+            label="upsert_edge",
+        )
+        upserted_edges = sum(1 for item in upsert_results if item)
         self.logger.info("edge extraction done | group_id=%s, generated_edges=%s, upserted_edges=%s", group_id, len(edges), upserted_edges)

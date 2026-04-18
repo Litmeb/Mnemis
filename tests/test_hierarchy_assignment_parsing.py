@@ -2,7 +2,8 @@ import asyncio
 from types import SimpleNamespace
 
 from mnemis_build.llm import OpenAILLMClient
-from mnemis_build.models import CategoryAssignmentPayload
+from mnemis_build.logging_utils import get_logger
+from mnemis_build.models import CategoryAssignmentPayload, NodeSelectionList
 
 
 def test_category_assignments_accept_top_level_list() -> None:
@@ -69,6 +70,7 @@ def test_complete_json_retries_after_truncated_response() -> None:
     llm = object.__new__(OpenAILLMClient)
     llm.config = SimpleNamespace(llm_model="test-model", small_llm_model="test-model")
     llm.recorder = None
+    llm.logger = get_logger("test.llm")
 
     responses = iter(
         [
@@ -117,6 +119,7 @@ def test_complete_json_surfaces_finish_reason_after_retry_exhaustion() -> None:
     llm = object.__new__(OpenAILLMClient)
     llm.config = SimpleNamespace(llm_model="test-model", small_llm_model="test-model")
     llm.recorder = None
+    llm.logger = get_logger("test.llm")
 
     async def create(**_: object):
         return SimpleNamespace(
@@ -148,3 +151,77 @@ def test_complete_json_surfaces_finish_reason_after_retry_exhaustion() -> None:
 
     assert "finish_reason='length'" in message
     assert "Response prefix" in message
+
+
+def test_node_selection_parser_accepts_top_level_list_or_object() -> None:
+    payload_from_list = NodeSelectionList.model_validate(
+        [
+            {
+                "name": "Relationships",
+                "uuid": "cat_relationships",
+                "get_all_children": True,
+            }
+        ]
+    )
+    payload_from_object = NodeSelectionList.model_validate(
+        {
+            "selections": [
+                {
+                    "name": "Relationships",
+                    "uuid": "cat_relationships",
+                    "get_all_children": False,
+                }
+            ]
+        }
+    )
+
+    assert payload_from_list.selections[0].uuid == "cat_relationships"
+    assert payload_from_object.selections[0].name == "Relationships"
+
+
+def test_complete_json_retries_after_natural_language_response() -> None:
+    llm = object.__new__(OpenAILLMClient)
+    llm.config = SimpleNamespace(llm_model="test-model", small_llm_model="test-model")
+    llm.recorder = None
+    llm.logger = get_logger("test.llm")
+
+    responses = iter(
+        [
+            SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(content="I would select the Relationships node."),
+                        finish_reason="stop",
+                    )
+                ]
+            ),
+            SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content='{"selections":[{"name":"Relationships","uuid":"cat_relationships","get_all_children":true}]}'
+                        ),
+                        finish_reason="stop",
+                    )
+                ]
+            ),
+        ]
+    )
+
+    async def create(**_: object):
+        return next(responses)
+
+    llm.client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(create=create)
+        )
+    )
+
+    payload = asyncio.run(
+        llm.complete_json(
+            NodeSelectionList,
+            [{"role": "user", "content": "Return strict JSON selections only."}],
+        )
+    )
+
+    assert payload.selections[0].name == "Relationships"

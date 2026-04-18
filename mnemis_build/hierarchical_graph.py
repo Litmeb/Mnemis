@@ -19,11 +19,9 @@ from .prompts import (
 
 PREV_EXAMPLE = """Layer 1:
 - Microsoft Research Asia -> Microsoft Research Labs
-- Microsoft Research Asia -> NLP-focused Labs
 - Microsoft Research Shanghai -> Microsoft Research Labs
 
 Layer 2:
-- Microsoft Research Labs -> Tech Company Labs
 - Microsoft Research Labs -> AI Research Organizations
 """
 
@@ -41,6 +39,19 @@ class HierarchicalGraphBuilder:
         self.llm = llm
         self.config = config
         self.logger = get_logger("hierarchy")
+
+    def _hierarchy_assignment_batch_size(self) -> int:
+        explicit_limit = getattr(self.config, "max_categories_per_call", 0)
+        if explicit_limit and explicit_limit > 0:
+            return explicit_limit
+        return max(1, getattr(self.config, "hierarchy_assignment_batch_size", 96))
+
+    def _iter_assignment_batches(self, nodes: list[IndexedNode]) -> list[list[IndexedNode]]:
+        batch_size = self._hierarchy_assignment_batch_size()
+        return [nodes[start : start + batch_size] for start in range(0, len(nodes), batch_size)]
+
+    def _category_detail_batch_size(self) -> int:
+        return max(1, getattr(self.config, "category_detail_batch_size", 48))
 
     async def rebuild(self, group_id: str) -> list[CategoryRecord]:
         self.logger.info("hierarchy rebuild start | group_id=%s", group_id)
@@ -109,39 +120,62 @@ class HierarchicalGraphBuilder:
     ) -> CategoryAssignmentPayload:
         if not nodes:
             return CategoryAssignmentPayload(assignments=[])
-        self.logger.info("category assignment start | layer=%s, node_count=%s", layer, len(nodes))
-        content = "\n".join(
-            f"{node.index}. {node.name}: [{node.summary}] tags={node.tag}"
-            for node in nodes[: self.config.max_categories_per_call] if self.config.max_categories_per_call > 0
-        ) or "\n".join(
-            f"{node.index}. {node.name}: [{node.summary}] tags={node.tag}"
-            for node in nodes
+        batches = self._iter_assignment_batches(nodes)
+        self.logger.info(
+            "category assignment start | layer=%s, node_count=%s, batch_count=%s, batch_size=%s",
+            layer,
+            len(nodes),
+            len(batches),
+            self._hierarchy_assignment_batch_size(),
         )
         existing = "\n".join(
             f"- {name}: {summary}"
             for name, summary in sorted(existing_categories.items())
         ) or "None"
-        payload = await self.llm.complete_json(
-            CategoryAssignmentPayload,
-            [
-                {"role": "system", "content": HIERARCHICAL_SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": build_hierarchy_user_prompt(
-                        layer,
-                        content,
-                        existing,
-                        PREV_EXAMPLE,
-                        speaker_policy_note=speaker_policy_note,
-                    ),
-                },
-            ],
-            stage="hierarchical_graph_ingestion",
-            operation="category_assignment",
-            require_json_object=False,
-        )
-        self.logger.info("category assignment done | layer=%s, assignment_count=%s", layer, len(payload.assignments))
-        return payload
+        merged_assignments = []
+        for batch_index, batch_nodes in enumerate(batches, start=1):
+            content = "\n".join(
+                f"{node.index}. {node.name}: [{node.summary}] tags={node.tag}"
+                for node in batch_nodes
+            )
+            batch_note = None
+            if len(batches) > 1:
+                batch_note = (
+                    f"This is batch {batch_index} of {len(batches)} for this hierarchy layer. "
+                    "Only use indexes that appear in the NODE INDEXED NAMES AND DESCRIPTIONS block for this batch."
+                )
+            payload = await self.llm.complete_json(
+                CategoryAssignmentPayload,
+                [
+                    {"role": "system", "content": HIERARCHICAL_SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": build_hierarchy_user_prompt(
+                            layer,
+                            content,
+                            existing,
+                            PREV_EXAMPLE,
+                            speaker_policy_note=speaker_policy_note,
+                            batch_note=batch_note,
+                        ),
+                    },
+                ],
+                stage="hierarchical_graph_ingestion",
+                operation="category_assignment",
+                require_json_object=False,
+            )
+            merged_assignments.extend(payload.assignments)
+            self.logger.info(
+                "category assignment batch done | layer=%s, batch=%s/%s, node_count=%s, assignment_count=%s",
+                layer,
+                batch_index,
+                len(batches),
+                len(batch_nodes),
+                len(payload.assignments),
+            )
+        result = CategoryAssignmentPayload(assignments=merged_assignments)
+        self.logger.info("category assignment done | layer=%s, assignment_count=%s", layer, len(result.assignments))
+        return result
 
     def _is_appendix_prompt_speaker_node(self, node: IndexedNode) -> bool:
         return node.name.strip().lower() in {"user", "i", "me"}
@@ -252,35 +286,66 @@ class HierarchicalGraphBuilder:
     ) -> dict[str, dict[str, object]]:
         if not grouped:
             return {}
-        self.logger.info("category detail generation start | layer=%s, category_count=%s", layer, len(grouped))
-        category_blocks: list[str] = []
-        for name, members in grouped.items():
-            lines = [f"Category: {name}", "Members:"]
-            for member in members:
-                lines.append(
-                    f'- {member.name}: summary="{member.summary}" tags={json.dumps(member.tag, ensure_ascii=False)}'
-                )
-            category_blocks.append("\n".join(lines))
-        payload = await self.llm.complete_json(
-            CategoryDetailsPayload,
-            [
-                {"role": "system", "content": CATEGORY_DETAILS_PROMPT},
-                {
-                    "role": "user",
-                    "content": build_category_details_user_prompt(layer, "\n\n".join(category_blocks)),
-                },
-            ],
-            stage="hierarchical_graph_ingestion",
-            operation="category_detail_generation",
+        grouped_items = list(grouped.items())
+        batch_size = self._category_detail_batch_size()
+        batches = [
+            grouped_items[start : start + batch_size]
+            for start in range(0, len(grouped_items), batch_size)
+        ]
+        self.logger.info(
+            "category detail generation start | layer=%s, category_count=%s, batch_count=%s, batch_size=%s",
+            layer,
+            len(grouped),
+            len(batches),
+            batch_size,
         )
-        result = {
-            category.name: {
-                "summary": category.summary.strip(),
-                "tag": [tag.strip() for tag in category.tag if tag.strip()][:5],
-            }
-            for category in payload.categories
-            if category.name.strip()
-        }
+        result: dict[str, dict[str, object]] = {}
+        for batch_index, batch_items in enumerate(batches, start=1):
+            category_blocks: list[str] = []
+            for name, members in batch_items:
+                lines = [f"Category: {name}", "Members:"]
+                for member in members:
+                    lines.append(
+                        f'- {member.name}: summary="{member.summary}" tags={json.dumps(member.tag, ensure_ascii=False)}'
+                    )
+                category_blocks.append("\n".join(lines))
+            batch_note = None
+            if len(batches) > 1:
+                batch_note = (
+                    f"This is batch {batch_index} of {len(batches)} for this layer. "
+                    "Return details only for the categories listed in this batch."
+                )
+            payload = await self.llm.complete_json(
+                CategoryDetailsPayload,
+                [
+                    {"role": "system", "content": CATEGORY_DETAILS_PROMPT},
+                    {
+                        "role": "user",
+                        "content": build_category_details_user_prompt(
+                            layer,
+                            "\n\n".join(category_blocks),
+                            batch_note=batch_note,
+                        ),
+                    },
+                ],
+                stage="hierarchical_graph_ingestion",
+                operation="category_detail_generation",
+            )
+            for category in payload.categories:
+                if not category.name.strip():
+                    continue
+                result[category.name] = {
+                    "summary": category.summary.strip(),
+                    "tag": [tag.strip() for tag in category.tag if tag.strip()][:2],
+                }
+            self.logger.info(
+                "category detail generation batch done | layer=%s, batch=%s/%s, category_count=%s, detailed_category_count=%s",
+                layer,
+                batch_index,
+                len(batches),
+                len(batch_items),
+                len(payload.categories),
+            )
         self.logger.info("category detail generation done | layer=%s, detailed_category_count=%s", layer, len(result))
         return result
 

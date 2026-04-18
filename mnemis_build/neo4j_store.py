@@ -93,19 +93,45 @@ class Neo4jGraphStore:
         )
         self.logger.info("clear group done | group_id=%s", group_id)
 
-    async def fetch_recent_episodes(self, group_id: str, limit: int) -> list[dict[str, Any]]:
-        self.logger.info("fetch recent episodes | group_id=%s, limit=%s", group_id, limit)
+    async def fetch_recent_episodes(
+        self,
+        group_id: str,
+        limit: int,
+        *,
+        exclude_source_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        self.logger.info(
+            "fetch recent episodes | group_id=%s, limit=%s, exclude_source_id=%s",
+            group_id,
+            limit,
+            exclude_source_id,
+        )
         result = await self.execute(
             """
             MATCH (e:Episodic {group_id: $group_id})
+            WHERE $exclude_source_id IS NULL OR e.source_id <> $exclude_source_id
             RETURN e.uuid AS uuid, e.content AS content, e.valid_at AS valid_at, e.source_id AS source_id
             ORDER BY e.valid_at DESC
             LIMIT $limit
             """,
             group_id=group_id,
             limit=limit,
+            exclude_source_id=exclude_source_id,
         )
         return [dict(record) for record in result.records]
+
+    async def fetch_completed_episode_source_ids(self, group_id: str) -> list[str]:
+        self.logger.info("fetch completed episode source ids | group_id=%s", group_id)
+        result = await self.execute(
+            """
+            MATCH (e:Episodic {group_id: $group_id})
+            WHERE coalesce(e.ingestion_complete, false)
+            RETURN e.source_id AS source_id
+            ORDER BY e.valid_at ASC, e.source_id ASC
+            """,
+            group_id=group_id,
+        )
+        return [str(record["source_id"]) for record in result.records if record.get("source_id")]
 
     async def search_entity_dedup_candidates(
         self,
@@ -365,23 +391,27 @@ class Neo4jGraphStore:
             limit=limit,
         )
 
-    async def upsert_episode(self, group_id: str, episode_uuid: str, episode: EpisodeInput, embedding: list[float]) -> None:
+    async def upsert_episode(self, group_id: str, episode_uuid: str, episode: EpisodeInput, embedding: list[float]) -> str:
         self.logger.info("upsert episode | group_id=%s, episode_uuid=%s, source_id=%s", group_id, episode_uuid, episode.source_id)
         metadata_json = json.dumps(
             {key: value for key, value in episode.metadata.items() if value is not None},
             ensure_ascii=False,
             sort_keys=True,
         )
-        await self.execute(
+        result = await self.execute(
             """
-            MERGE (e:Episodic {uuid: $uuid})
-            SET e.group_id = $group_id,
+            MERGE (e:Episodic {group_id: $group_id, source_id: $source_id})
+            ON CREATE SET e.uuid = $uuid
+            SET e.uuid = coalesce(e.uuid, $uuid),
+                e.group_id = $group_id,
                 e.speaker = $speaker,
                 e.content = $content,
                 e.valid_at = datetime($valid_at),
                 e.source_id = $source_id,
                 e.metadata_json = $metadata_json,
-                e.episode_embedding = $embedding
+                e.episode_embedding = $embedding,
+                e.ingestion_complete = coalesce(e.ingestion_complete, false)
+            RETURN e.uuid AS uuid
             """,
             uuid=episode_uuid,
             group_id=group_id,
@@ -391,6 +421,20 @@ class Neo4jGraphStore:
             source_id=episode.source_id,
             metadata_json=metadata_json,
             embedding=embedding,
+        )
+        if not result.records:
+            return episode_uuid
+        return str(result.records[0]["uuid"])
+
+    async def mark_episode_ingested(self, group_id: str, source_id: str) -> None:
+        self.logger.info("mark episode ingested | group_id=%s, source_id=%s", group_id, source_id)
+        await self.execute(
+            """
+            MATCH (e:Episodic {group_id: $group_id, source_id: $source_id})
+            SET e.ingestion_complete = true
+            """,
+            group_id=group_id,
+            source_id=source_id,
         )
 
     async def upsert_entity(self, entity: EntityRecord, name_embedding: list[float], summary_embedding: list[float]) -> None:

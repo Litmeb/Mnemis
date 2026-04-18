@@ -15,6 +15,7 @@ from .prompts import (
     build_answer_user_prompt,
 )
 from .reranker import RerankCandidate, RerankBackendStatus, build_reranker
+from .logging_utils import get_logger
 
 
 class MnemisRetriever:
@@ -23,10 +24,24 @@ class MnemisRetriever:
         self.llm = llm
         self.config = config
         self.reranker = build_reranker(llm, config)
+        self.logger = get_logger("retrieval")
 
     def _normalize_timestamp(self, value: Any) -> str | Any:
         if isinstance(value, datetime):
             return value.strftime("%Y/%m/%d (%a) %H:%M")
+        if hasattr(value, "to_native"):
+            try:
+                native_value = value.to_native()
+                if isinstance(native_value, datetime):
+                    return native_value.strftime("%Y/%m/%d (%a) %H:%M")
+                return str(native_value)
+            except Exception:
+                return str(value)
+        if hasattr(value, "iso_format"):
+            try:
+                return value.iso_format()
+            except Exception:
+                return str(value)
         return value
 
     def _format_items(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -64,20 +79,42 @@ class MnemisRetriever:
         response = await self.llm.complete_json(
             NodeSelectionList,
             [{"role": "user", "content": prompt}],
+            stage="retrieval",
+            operation="layer_selection",
             use_small_model=True,
         )
         nodes_by_uuid = {node["uuid"]: node for node in current_layer_nodes}
         nodes_by_name = {node["name"]: node for node in current_layer_nodes}
         selected: list[dict[str, Any]] = []
         shortcuts: list[dict[str, Any]] = []
+        unmatched: list[dict[str, str]] = []
         for choice in response.selections:
             node = nodes_by_uuid.get(choice.uuid) or nodes_by_name.get(choice.name)
             if not node:
+                unmatched.append({"name": choice.name, "uuid": choice.uuid})
                 continue
             if choice.get_all_children:
                 shortcuts.append(node)
             else:
                 selected.append(node)
+        if unmatched:
+            self.logger.warning(
+                "layer selection returned unmatched nodes | query=%r, unmatched_count=%s, unmatched=%s",
+                query,
+                len(unmatched),
+                unmatched[:5],
+            )
+        if response.selections and not selected and not shortcuts:
+            raise ValueError(
+                "Layer selection returned only unmatched nodes; aborting System-2 retrieval instead of continuing empty."
+            )
+        self.logger.info(
+            "layer selection parsed | query=%r, candidate_count=%s, selected=%s, shortcuts=%s",
+            query,
+            len(current_layer_nodes),
+            len(selected),
+            len(shortcuts),
+        )
         return selected, shortcuts
 
     async def _system2_retrieve(self, query: str, group_id: str) -> dict[str, list[dict[str, Any]]]:
@@ -162,8 +199,8 @@ class MnemisRetriever:
         return json.dumps(
             {
                 "fact": item.get("fact"),
-                "valid_at": item.get("valid_at"),
-                "invalid_at": item.get("invalid_at"),
+                "valid_at": self._normalize_timestamp(item.get("valid_at")),
+                "invalid_at": self._normalize_timestamp(item.get("invalid_at")),
                 "source_name": item.get("source_name"),
                 "target_name": item.get("target_name"),
             },

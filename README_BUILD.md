@@ -109,6 +109,26 @@ Rebuild all LoCoMo users with user-level parallelism:
 python .\build_mnemis_graph.py rebuild-locomo-all --group-id-prefix locomo_user --max-concurrent-users 4
 ```
 
+Rebuild only selected LoCoMo users:
+
+```powershell
+python .\build_mnemis_graph.py rebuild-locomo-all --group-id-prefix locomo_user --user-index 1,3,7 --max-concurrent-users 3
+```
+
+Resume a failed rebuild without clearing the group first:
+
+```powershell
+python .\build_mnemis_graph.py rebuild-locomo-all --group-id-prefix locomo_user --max-concurrent-users 2 --resume
+```
+
+`--resume` is strict: if Mnemis cannot prove where to continue from, it aborts instead of replaying from turn 0. This is intentional so resume never overwrites existing graph data by accident.
+
+If the failed run happened before episode completion markers existed, point resume at the failed log so the builder can recover the last completed turn per user:
+
+```powershell
+python .\build_mnemis_graph.py rebuild-locomo-all --group-id-prefix locomo_user --max-concurrent-users 2 --resume --resume-log results/logs/20260417_175031/mnemis_build.log
+```
+
 `rebuild-locomo-all` shows one total progress bar for all users plus one transient worker bar per concurrent user, so you can see both overall completion and which stage each active user is in.
 
 Each `rebuild-locomo` run now emits lightweight instrumentation reports into `results/instrumentation` by default:

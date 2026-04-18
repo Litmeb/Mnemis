@@ -1,10 +1,13 @@
 ENTITY_NAME_EXTRACTION_PROMPT = """You are building the base graph for the Mnemis memory system.
 
-Extract all concrete entities mentioned in the current episode and the recent episode context.
+Extract concrete, durable entities mentioned in the current episode and the recent episode context.
 
 Rules:
-- Include people, organizations, places, objects, events, and well-defined concepts.
+- Include people, organizations, places, named events, named works, products, tools, pets, vehicles, courses, jobs, hobbies, and other specific noun phrases that are useful graph nodes.
 - Prefer names and specific noun phrases over vague references.
+- Include a common-noun concept only when it is central and persistent in the episode, such as a recurring hobby, job title, diagnosis, class, or project.
+- Exclude standalone emotions, virtues, broad themes, generic qualities, and vague abstractions such as "empathy", "understanding", "courage", "support", or "mental health" unless they refer to a specific named program, organization, event, or diagnosis.
+- Exclude details that are only adjectives, sentiments, or non-reusable descriptors.
 - Do not output duplicates.
 - Return JSON only with this schema:
 {"names": ["entity 1", "entity 2"]}
@@ -15,6 +18,7 @@ ENTITY_REFLECTION_PROMPT = """You are checking whether any important entities we
 Given the episode context and the previously extracted entity names, add only truly missing names.
 - Do not repeat names already extracted.
 - Keep the same entity granularity as the original extraction.
+- Apply the same filtering rules: prefer durable concrete nodes and skip vague abstractions unless they clearly denote a specific recurring entity.
 - Return JSON only with this schema:
 {"names": ["missing entity 1", "missing entity 2"]}
 """
@@ -23,21 +27,18 @@ ENTITY_DETAILS_PROMPT = """You are enriching de-duplicated entities for the Mnem
 
 For each entity:
 - Keep the provided name unchanged.
-- Write a concise summary grounded in the current and recent episodes.
-- Provide up to 5 tags, each at most 3 words.
-- Include the source episode ids where the entity appears in this batch.
+- Write exactly one concise sentence grounded in the current and recent episodes.
+- Keep each summary under 30 words.
+- Provide 1 to 3 short tags, each at most 3 words.
+- Do not add entities that were not provided.
 
 Return JSON only with this schema:
 {
   "entities": [
     {
-      "uuid": "keep_or_generate_uuid",
-      "group_id": "group id",
       "name": "entity name",
       "summary": "brief context summary",
-      "tag": ["tag1", "tag2"],
-      "episode_idx": ["episode_uuid_1"],
-      "source_ids": ["raw_source_id_1"]
+      "tag": ["tag1", "tag2"]
     }
   ]
 }
@@ -49,20 +50,20 @@ Each edge must be a verifiable statement about a meaningful relationship, action
 
 Rules:
 - Use only the provided entity names.
-- Keep facts concise and atomic.
+- Return at most 6 edges.
+- Keep facts concise and atomic, with each fact under 20 words.
 - Skip unsupported or speculative facts.
 - Use timestamps only when grounded in the context.
+- Do not emit duplicate edges or paraphrases of the same edge.
+- Prefer the most important, durable relationships over exhaustive coverage.
 - Return JSON only with this schema:
 {
   "edges": [
     {
-      "uuid": "keep_or_generate_uuid",
-      "group_id": "group id",
       "source_entity_name": "entity A",
       "target_entity_name": "entity B",
       "fact": "verifiable fact",
-      "valid_at": "2023-05-01T00:00:00" or null,
-      "invalid_at": null
+      "valid_at": "2023-05-01T00:00:00" or null
     }
   ]
 }
@@ -70,9 +71,14 @@ Rules:
 
 EDGE_REFLECTION_PROMPT = """You are checking whether any meaningful graph edges were missed.
 
+The input JSON contains reference data such as available entity descriptions, episode context, and existing edges.
+
 Add only missing edges that are supported by the episode context and the provided entity list.
 Do not repeat existing edges.
-Return JSON only using the same schema as the original edge extraction.
+Do not echo or rewrite the input.
+Do not return `group_id`, `context`, `available_entities`, or `existing_edges`.
+Return a JSON object with exactly one top-level key, `edges`, using the same edge-item schema as the original edge extraction.
+If no additional edges are needed, return `{"edges": []}`.
 """
 
 HIERARCHICAL_SYSTEM_PROMPT = """You are an AI assistant specialized in semantic categorization of nodes.
@@ -103,11 +109,13 @@ Examples of VALID categories:
 2. Output category assignments using only node indexes. Do not repeat node names.
 
 3. A node CAN be assigned to MULTIPLE categories at the same time.
-- Each node can be assigned to multiple categories based on shared attributes.
+- Use multiple category assignments only when the node clearly belongs in more than one strong semantic group.
 - When multiple categories are formed for a node, select the minimal subset of features common across
 the grouped nodes.
 
-4. There must be NO leftover or ungrouped nodes. Single-member categories are allowed if necessary.
+4. Prefer high-quality semantic groupings over exhaustive coverage.
+- Do not create weak or forced categories just to cover every leftover node.
+- Avoid singleton categories unless they are strongly justified.
 
 Return JSON only.
 
@@ -133,6 +141,7 @@ def build_hierarchy_user_prompt(
     existing_categories: str,
     prev_example: str,
     speaker_policy_note: str | None = None,
+    batch_note: str | None = None,
 ) -> str:
     speaker_policy = ""
     if speaker_policy_note:
@@ -140,6 +149,14 @@ def build_hierarchy_user_prompt(
 <SPEAKER POLICY>
 {speaker_policy_note}
 </SPEAKER POLICY>
+
+"""
+    batch_policy = ""
+    if batch_note:
+        batch_policy = f"""
+<BATCH POLICY>
+{batch_note}
+</BATCH POLICY>
 
 """
     return f"""<NODE INDEXED NAMES AND DESCRIPTIONS>
@@ -158,27 +175,6 @@ You are currently at Layer {layer}, where:
 - Layer 1 contains the most specific, fine-grained categories.
 - Higher layers should group lower-layer categories into broader, more abstract super-categories.
 
-Example:
-
-Layer 1:
-- "Golden Retriever", "Poodle", "German Shepherd" -> "Dog breeds"
-- "Persian Cat", "Siamese Cat" -> "Cat breeds"
-- "Bengal Tiger", "Siberian Tiger" -> "Tiger subspecies"
-- "Oak tree", "Pine tree" -> "Tree species"
-
-Layer 2:
-- "Dog breeds", "Cat breeds" -> "Pets"
-- "Dog breeds", "Tiger subspecies" -> "Mammals"
-- "Tiger subspecies" -> "Wild animals"
-- "Tree species" -> "Trees"
-
-Layer 3:
-- "Pets", "Wild animals" -> "Animals"
-- "Trees" -> "Plants"
-
-Layer 4:
-- "Animals", "Plants" -> "Living organisms"
-
 Key points:
 - Categories may belong to multiple parent categories.
 - Do not merge categories that are too loosely related.
@@ -193,9 +189,10 @@ Previous Layer {layer - 1} categories example:
 {prev_example}
 </GUIDANCE ON CATEGORY GRANULARITY>
 
-{speaker_policy}# ATTENTION
-- Every node listed above must appear in at least one category assignment.
+{speaker_policy}{batch_policy}# ATTENTION
+- Cover the strongest semantic groups in this batch. Uncovered leftovers can be promoted automatically later.
 - The category name MUST NOT include the word "and".
+- Prefer fewer, stronger categories over many thin categories.
 
 Please follow the INSTRUCTIONS and GUIDANCE carefully to ensure accurate categorization and meaningful hierarchical relationships.
 DO NOT INCLUDE ANY INVALID CATEGORIES.
@@ -208,7 +205,8 @@ CATEGORY_DETAILS_PROMPT = """You are enriching category nodes for the Mnemis hie
 For each category:
 - Keep the provided category name unchanged.
 - Write a concise but informative summary grounded in the child members.
-- Provide up to 5 tags, each at most 3 words.
+- Keep the summary between 12 and 16 words when possible.
+- Provide at most 2 tags, each at most 3 words.
 - Preserve minimal abstraction: summaries should stay close to the shared semantics of the child nodes.
 
 Return JSON only with this schema:
@@ -251,8 +249,15 @@ Rules:
 """
 
 
-def build_category_details_user_prompt(layer: int, category_blocks: str) -> str:
-    return f"""You are writing summaries and tags for Layer {layer} categories.
+def build_category_details_user_prompt(layer: int, category_blocks: str, batch_note: str | None = None) -> str:
+    batch_section = ""
+    if batch_note:
+        batch_section = f"""
+
+<BATCH POLICY>
+{batch_note}
+</BATCH POLICY>"""
+    return f"""You are writing summaries and tags for Layer {layer} categories.{batch_section}
 
 <CATEGORIES AND THEIR CHILDREN>
 {category_blocks}

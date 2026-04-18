@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import mnemis_build.llm as llm_module
 from mnemis_build.config import BuildConfig
 from mnemis_build.llm import OpenAILLMClient
+from mnemis_build.logging_utils import get_logger
 
 
 def _build_config() -> BuildConfig:
@@ -25,6 +26,7 @@ def _build_config() -> BuildConfig:
         rerank_allow_llm_fallback=True,
         embedding_model="text-embedding-3-small",
         embedding_dim=128,
+        max_coroutines=4,
         recent_episode_window=6,
         max_reflection_rounds=1,
         force_base_speaker_entity=True,
@@ -32,6 +34,13 @@ def _build_config() -> BuildConfig:
         min_children_per_category=2,
         max_hierarchy_layers=4,
         max_categories_per_call=0,
+        hierarchy_assignment_batch_size=96,
+        category_detail_batch_size=48,
+        entity_name_max_completion_tokens=192,
+        entity_reflection_max_completion_tokens=192,
+        entity_detail_max_completion_tokens=768,
+        edge_extraction_max_completion_tokens=768,
+        edge_reflection_max_completion_tokens=512,
         episode_top_k=10,
         entity_top_k=20,
         edge_top_k=20,
@@ -71,6 +80,7 @@ def _build_client(responses) -> OpenAILLMClient:
     client.recorder = None
     client.client = _FakeClient(responses)
     client.embedding_client = client.client
+    client.logger = get_logger("test.llm")
     return client
 
 
@@ -105,3 +115,42 @@ def test_embed_splits_large_requests_into_batches() -> None:
     assert len(vectors) == 33
     assert [len(call["input"]) for call in client.client.embeddings.calls] == [32, 1]
     assert all(call["dimensions"] == 128 for call in client.client.embeddings.calls)
+
+
+def test_complete_json_passes_max_completion_tokens() -> None:
+    client = object.__new__(OpenAILLMClient)
+    client.config = _build_config()
+    client.recorder = None
+    client.logger = get_logger("test.llm")
+    captured: list[dict] = []
+
+    async def create(**kwargs):
+        captured.append(kwargs)
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(content='{"assignments":[{"category":"Research Labs","indexes":[0,1]}]}'),
+                    finish_reason="stop",
+                )
+            ],
+            usage=None,
+        )
+
+    client.client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(create=create)
+        )
+    )
+
+    from mnemis_build.models import CategoryAssignmentPayload
+
+    payload = asyncio.run(
+        client.complete_json(
+            CategoryAssignmentPayload,
+            [{"role": "user", "content": "Return JSON."}],
+            max_completion_tokens=123,
+        )
+    )
+
+    assert payload.assignments[0].category == "Research Labs"
+    assert captured[0]["max_completion_tokens"] == 123

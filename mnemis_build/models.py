@@ -50,6 +50,73 @@ class EntityExtractionPayload(BaseModel):
     entities: list[EntityRecord]
 
 
+class MinimalEntityRecord(BaseModel):
+    name: str
+    summary: str
+    tag: list[str] = Field(default_factory=list)
+
+
+class MinimalEntityExtractionPayload(BaseModel):
+    entities: list[MinimalEntityRecord]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_top_level_shape(cls, value: object) -> object:
+        if isinstance(value, list):
+            return {"entities": value}
+        if isinstance(value, dict):
+            if "entities" in value:
+                return value
+            for alias in ("items", "results"):
+                if alias in value:
+                    return {"entities": value.get(alias) or []}
+            for candidate in value.values():
+                if (
+                    isinstance(candidate, list)
+                    and all(
+                        isinstance(item, dict)
+                        and {"name", "summary"}.issubset(item.keys())
+                        for item in candidate
+                    )
+                ):
+                    return {"entities": candidate}
+        return value
+
+
+class MinimalEdgeRecord(BaseModel):
+    source_entity_name: str
+    target_entity_name: str
+    fact: str
+    valid_at: datetime | None = None
+
+
+class MinimalEdgeExtractionPayload(BaseModel):
+    edges: list[MinimalEdgeRecord]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_top_level_shape(cls, value: object) -> object:
+        if isinstance(value, list):
+            return {"edges": value}
+        if isinstance(value, dict):
+            if "edges" in value:
+                return value
+            for alias in ("missing_edges", "new_edges", "additional_edges"):
+                if alias in value:
+                    return {"edges": value.get(alias) or []}
+            for candidate in value.values():
+                if (
+                    isinstance(candidate, list)
+                    and all(
+                        isinstance(item, dict)
+                        and {"source_entity_name", "target_entity_name", "fact"}.issubset(item.keys())
+                        for item in candidate
+                    )
+                ):
+                    return {"edges": candidate}
+        return value
+
+
 class EdgeExtractionPayload(BaseModel):
     edges: list[EdgeRecord]
 
@@ -130,7 +197,14 @@ class NodeSelection(BaseModel):
 
 
 class NodeSelectionList(BaseModel):
-    selections: list[NodeSelection] = Field(default_factory=list)
+    selections: list[NodeSelection]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_top_level_shape(cls, value: object) -> object:
+        if isinstance(value, list):
+            return {"selections": value}
+        return value
 
 
 class RerankedItem(BaseModel):
