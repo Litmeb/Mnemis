@@ -639,6 +639,21 @@ class Neo4jGraphStore:
         )
         return [dict(record) for record in result.records]
 
+    async def fetch_descendant_entities(self, group_id: str, parent_uuids: list[str]) -> list[dict[str, Any]]:
+        if not parent_uuids:
+            return []
+        result = await self.execute(
+            """
+            MATCH (parent:Category)-[:CATEGORIZES*1..]->(child:Entity)
+            WHERE parent.group_id = $group_id AND parent.uuid IN $parent_uuids
+            RETURN DISTINCT child.uuid AS uuid, child.name AS name, child.tag AS tag,
+                            child.summary AS summary, child.layer AS layer
+            """,
+            group_id=group_id,
+            parent_uuids=parent_uuids,
+        )
+        return [dict(record) for record in result.records]
+
     async def fetch_one_hop_neighbors(self, group_id: str, node_uuids: list[str]) -> dict[str, list[dict[str, Any]]]:
         if not node_uuids:
             return {"episodes": [], "edges": [], "nodes": []}

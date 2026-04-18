@@ -67,6 +67,34 @@ class MnemisRetriever:
             )
         return "\n".join(json.dumps(item, ensure_ascii=False) for item in payload)
 
+    def _is_entity_node(self, node: dict[str, Any]) -> bool:
+        return node.get("layer") in (None, 0)
+
+    def _split_entity_and_category_nodes(
+        self,
+        nodes: list[dict[str, Any]],
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        entities: list[dict[str, Any]] = []
+        categories: list[dict[str, Any]] = []
+        for node in nodes:
+            if self._is_entity_node(node):
+                entities.append(node)
+            else:
+                categories.append(node)
+        return entities, categories
+
+    async def _resolve_category_entities(
+        self,
+        group_id: str,
+        categories: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        if not categories:
+            return []
+        return await self.store.fetch_descendant_entities(
+            group_id,
+            [node["uuid"] for node in categories],
+        )
+
     async def _layer_selection(
         self,
         query: str,
@@ -120,7 +148,8 @@ class MnemisRetriever:
     async def _system2_retrieve(self, query: str, group_id: str) -> dict[str, list[dict[str, Any]]]:
         max_layer = await self.store.fetch_max_layer(group_id)
         previous_layer_nodes: list[dict[str, Any]] = []
-        selected_nodes: dict[str, dict[str, Any]] = {}
+        selected_entities: dict[str, dict[str, Any]] = {}
+        selected_categories: dict[str, dict[str, Any]] = {}
 
         for layer in range(max_layer, 0, -1):
             if layer == max_layer:
@@ -133,22 +162,43 @@ class MnemisRetriever:
             else:
                 break
             selected, shortcuts = await self._layer_selection(query, current_layer_nodes)
-            for node in selected:
-                selected_nodes[node["uuid"]] = node
+            selected_entity_nodes, selected_category_nodes = self._split_entity_and_category_nodes(selected)
+            for node in selected_entity_nodes:
+                selected_entities[node["uuid"]] = node
+            for node in selected_category_nodes:
+                selected_categories[node["uuid"]] = node
+
+            shortcut_entity_nodes, shortcut_category_nodes = self._split_entity_and_category_nodes(shortcuts)
+            for node in shortcut_entity_nodes:
+                selected_entities[node["uuid"]] = node
             descendants = await self.store.fetch_all_descendants(
                 group_id,
-                [node["uuid"] for node in shortcuts],
+                [node["uuid"] for node in shortcut_category_nodes],
             )
-            for node in descendants:
-                selected_nodes[node["uuid"]] = node
-            previous_layer_nodes = selected
+            descendant_entities, _ = self._split_entity_and_category_nodes(descendants)
+            for node in descendant_entities:
+                selected_entities[node["uuid"]] = node
 
-        neighbors = await self.store.fetch_one_hop_neighbors(group_id, list(selected_nodes))
-        selected_nodes.update({node["uuid"]: node for node in neighbors["nodes"]})
+            if layer == 1 and selected_category_nodes:
+                resolved_entities = await self._resolve_category_entities(group_id, selected_category_nodes)
+                for node in resolved_entities:
+                    selected_entities[node["uuid"]] = node
+                for category in selected_category_nodes:
+                    selected_categories.pop(category["uuid"], None)
+
+            previous_layer_nodes = selected_category_nodes
+
+        if selected_categories:
+            resolved_entities = await self._resolve_category_entities(group_id, list(selected_categories.values()))
+            for node in resolved_entities:
+                selected_entities[node["uuid"]] = node
+
+        neighbors = await self.store.fetch_one_hop_neighbors(group_id, list(selected_entities))
+        selected_entities.update({node["uuid"]: node for node in neighbors["nodes"]})
         return {
             "episodes": self._format_items(neighbors["episodes"]),
             "edges": self._format_items(neighbors["edges"]),
-            "nodes": self._format_items(list(selected_nodes.values())),
+            "nodes": self._format_items(list(selected_entities.values())),
         }
 
     async def _system1_retrieve(self, query: str, group_id: str) -> dict[str, list[dict[str, Any]]]:
